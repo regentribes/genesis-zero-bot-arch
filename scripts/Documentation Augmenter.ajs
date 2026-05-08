@@ -1,0 +1,400 @@
+/**
+ * @module DocumentationAugmenter
+ * @description A script to automatically generate and enhance documentation for ArchiMate views and elements using AI
+ * @version 3.4
+ * @author Claude AI Assistant
+ * @lastModifiedDate 2024-08-08
+ */
+
+console.clear();
+console.show();
+
+const { OllamaClient, Message, GenerateOptions, ROLES } = require('./lib/ollamaClient');
+const modelTraversal = require('./lib/modelTraversal');
+
+// Import Java Thread class
+const Thread = Java.type('java.lang.Thread');
+
+// Initialize logger
+const jarchiLogger = require('./lib/jarchiLogger');
+const log = jarchiLogger.createLogger('DocumentationAugmenter', __DIR__);
+
+// Load settings from preference store
+const preferenceStore = workbench.getPreferenceStore();
+const MODEL = preferenceStore.getString('ollamaModel') || 'llama3.1';
+const BASE_URL = preferenceStore.getString('ollamaBaseUrl') || 'http://localhost:11434';
+const TEMPERATURE = parseFloat(preferenceStore.getString('ollamaTemperature') || '0.7');
+const TOP_K = parseInt(preferenceStore.getString('ollamaTopK') || '40');
+const TOP_P = parseFloat(preferenceStore.getString('ollamaTopP') || '0.9');
+
+// Initialize Ollama client with the configured base URL
+const ollama = new OllamaClient(BASE_URL);
+
+// Flag to control relationship documentation generation
+const GENERATE_RELATIONSHIP_DOCS = false; // Set to true if you want to generate relationship documentation
+
+// Retry settings
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 5000; // 5 seconds
+
+const ELEMENT_DOCUMENTATION_TOOL = {
+    type: "function",
+    function: {
+        name: "generate_element_documentation",
+        description: "Generate structured documentation for an ArchiMate element",
+        parameters: {
+            type: "object",
+            properties: {
+                overview: {
+                    type: "string",
+                    description: "A brief overview of the element"
+                },
+                name_and_type: {
+                    type: "string",
+                    description: "The name and type of the element"
+                },
+                purpose: {
+                    type: "string",
+                    description: "The purpose and description of the element"
+                },
+                key_attributes: {
+                    type: "string",
+                    description: "Key attributes of the element"
+                },
+                relationships: {
+                    type: "string",
+                    description: "Interpretation of important relationships of the element"
+                },
+                business_impact: {
+                    type: "string",
+                    description: "The business impact of the element"
+                },
+                technical_details: {
+                    type: "string",
+                    description: "Technical details of the element"
+                },
+                risks_and_issues: {
+                    type: "string",
+                    description: "Risks and issues associated with the element"
+                },
+                future_considerations: {
+                    type: "string",
+                    description: "Future considerations for the element"
+                }
+            },
+            required: ["overview", "name_and_type", "purpose", "key_attributes", "relationships", "business_impact", "technical_details"]
+        }
+    }
+};
+
+async function generateViewDocumentation(view) {
+    log.info('Generating documentation for view', { viewName: view.name });
+
+    const systemContext = createSystemContext(view);
+    const initialViewDocumentation = await retryOperation(() => generateViewDocumentationWithoutTool(
+        systemContext, 
+        createViewPrompt(view.name, "initial")
+    ));
+    log.debug('Initial view documentation generated');
+
+    if (initialViewDocumentation) {
+        const elementUpdates = await generateElementDocumentation(view, systemContext, initialViewDocumentation);
+        log.debug('Element documentation generation complete');
+
+        // Second pass for view documentation with element context
+        const elementContext = createElementContext(elementUpdates);
+        const finalViewDocumentation = await retryOperation(() => generateViewDocumentationWithoutTool(
+            systemContext + "\n" + elementContext,
+            createViewPrompt(view.name, "final")
+        ));
+        log.debug('Final view documentation generated');
+        log.markdown(finalViewDocumentation)
+        return {
+            view: { id: view.id, documentation: finalViewDocumentation },
+            elements: elementUpdates.elements,
+            relationships: elementUpdates.relationships
+        };
+    } else {
+        log.error('Failed to generate initial view documentation');
+        return null;
+    }
+}
+
+function createViewPrompt(viewName, stage) {
+    if (stage === "initial") {
+        return `Provide a comprehensive and illustrative documentation for the ArchiMate view "${viewName}". Your documentation should:
+
+1. Start with a clear and concise overview of the view's purpose and scope.
+2. Describe the key components (elements) present in the view, explaining their roles and significance.
+3. Illustrate the important relationships between elements, focusing on how they interact and depend on each other. Don't just list relationships, but explain their implications and importance.
+4. Discuss the business context of this view, explaining how it relates to broader business goals or processes.
+5. Explain the technical implications of this view, including any architectural decisions or constraints it represents.
+6. Identify any assumptions or constraints that are important for understanding this view.
+7. If relevant, mention any related views that might provide additional context or detail.
+8. Conclude with a summary that ties together the main points and emphasizes the view's importance in the overall architecture.
+
+Your documentation should be clear, informative, and easy to understand for both technical and non-technical stakeholders. Use descriptive language and, where appropriate, provide examples or analogies to illustrate complex concepts.`;
+    } else {
+        return `Now that you have detailed information about the individual elements in the view "${viewName}", please provide a refined and comprehensive documentation for the entire view. Your updated documentation should:
+
+1. Synthesize the information from individual elements into a coherent narrative about the view as a whole.
+2. Highlight key insights or patterns that emerge from looking at the elements collectively.
+3. Explain how the various elements work together to achieve the view's overall purpose.
+4. Describe any critical paths or core processes that are represented in this view.
+5. Discuss potential areas of concern or opportunity based on the relationships and dependencies between elements.
+6. Provide a more nuanced explanation of the business impact and technical implications, drawing on the detailed element information.
+7. If applicable, suggest areas where this view might be extended or refined in the future.
+
+Your refined documentation should provide a rich, insightful overview of the view that goes beyond the sum of its parts. It should offer valuable insights for architects, business stakeholders, and technical teams alike.`;
+    }
+}
+
+function createSystemContext(view) {
+    let context = `View Name: ${view.name}\n`;
+    context += `View Documentation: ${view.documentation || 'None'}\n\n`;
+    context += "Elements and Relationships:\n";
+
+    modelTraversal.traverse({
+        viewElementHandler: (element) => {
+            context += `- Element: ${element.name} (${element.type})\n`;
+            context += `  Documentation: ${element.documentation || 'None'}\n`;
+        },
+        viewRelationshipHandler: (relationship) => {
+            context += `- Relationship: ${relationship.name || 'Unnamed'} (${relationship.type})\n`;
+            context += `  Source: ${relationship.source.name}, Target: ${relationship.target.name}\n`;
+            context += `  Documentation: ${relationship.documentation || 'None'}\n`;
+        }
+    }, view);
+    return context;
+}
+
+function createElementContext(updates) {
+    let context = "Element Documentation Summary:\n\n";
+    updates.elements.forEach(element => {
+        context += `Element: ${element.id}\n`;
+        context += element.updates.documentation + "\n\n";
+    });
+    return context;
+}
+
+async function generateViewDocumentationWithoutTool(context, prompt) {
+    const messages = [
+        new Message(ROLES.SYSTEM, "You are an expert technical writer specializing in enterprise architecture documentation. Your task is to create clear, comprehensive, and insightful documentation for ArchiMate views. Focus on providing a holistic understanding of the view, its components, and their interactions. Use descriptive and illustrative language to make complex architectural concepts accessible to both technical and non-technical audiences."),
+        new Message(ROLES.SYSTEM, context),
+        new Message(ROLES.USER, prompt)
+    ];
+
+    const options = new GenerateOptions({
+        temperature: TEMPERATURE,
+        top_k: TOP_K,
+        top_p: TOP_P,
+        stream: false
+    });
+
+    const response = await ollama.generateChatCompletion(MODEL, messages, options);
+    
+    if (response.message && response.message.content) {
+        return response.message.content.trim();
+    } else {
+        console.error("Unexpected response format from Ollama");
+        return null;
+    }
+}
+
+async function generateDocumentation(context, prompt, isView) {
+    const tool = ELEMENT_DOCUMENTATION_TOOL;
+    
+    const messages = [
+        new Message(ROLES.SYSTEM, "You are a technical documentation assistant for enterprise architecture. Provide concise, factual information in a professional tone. Focus on accuracy, relevance, and technical insights. When describing relationships, interpret their meaning and impact rather than just listing them."),
+        new Message(ROLES.SYSTEM, context),
+        new Message(ROLES.USER, prompt)
+    ];
+
+    const options = new GenerateOptions({
+        temperature: TEMPERATURE,
+        top_k: TOP_K,
+        top_p: TOP_P,
+        stream: false
+    });
+
+    const response = await ollama.generateChatCompletionWithTools(MODEL, messages, [tool], options);
+    
+    if (response.message && response.message.tool_calls && response.message.tool_calls.length > 0) {
+        const toolCall = response.message.tool_calls[0];
+        const functionArgs = toolCall.function.arguments;
+        return formatElementDocumentation(functionArgs);
+    } else {
+        console.error("Unexpected response format from Ollama");
+        return null;
+    }
+}
+
+
+function formatElementDocumentation(args) {
+    return `# ${args.name_and_type}
+
+${args.overview}
+
+## Purpose
+${args.purpose}
+
+## Key Attributes
+${args.key_attributes}
+
+## Relationships
+${args.relationships}
+
+## Business Impact
+${args.business_impact}
+
+## Technical Details
+${args.technical_details}
+
+## Risks and Issues
+${args.risks_and_issues || "N/A"}
+
+## Future Considerations
+${args.future_considerations || "N/A"}`;
+}
+
+async function generateElementDocumentation(view, systemContext, viewDocumentation) {
+    const updates = {
+        elements: [],
+        relationships: []
+    };
+
+    const items = [];
+    modelTraversal.traverse({
+        viewElementHandler: (element) => {
+            items.push({ type: 'element', item: element });
+        },
+        viewRelationshipHandler: (relationship) => {
+            if (GENERATE_RELATIONSHIP_DOCS) {
+                items.push({ type: 'relationship', item: relationship });
+            }
+        }
+    }, view);
+
+    const totalItems = items.length;
+    log.info(`Processing elements and relationships`, { total: totalItems });
+
+    for (let i = 0; i < items.length; i++) {
+        const { type, item } = items[i];
+        const itemName = type === 'element' ? item.name : (item.name || `${item.source.name} -> ${item.target.name}`);
+        log.debug(`Processing ${type}`, { name: itemName, progress: `${i + 1}/${totalItems}` });
+
+        const docPrompt = `Analyze the ${type} '${itemName}' (${item.type}) within the context of the view. 
+                           Provide a structured technical description focusing on its role, significance, and key characteristics. 
+                           Interpret the relationships and their impact rather than simply listing them.`;
+
+        const documentation = await retryOperation(() => generateDocumentation(systemContext + "\n" + viewDocumentation, docPrompt, false));
+
+        if (documentation) {
+            log.markdown(documentation);
+            if (type === 'element') {
+                updates.elements.push({ 
+                    id: item.id, 
+                    updates: { documentation: documentation }
+                });
+            } else if (GENERATE_RELATIONSHIP_DOCS) {
+                updates.relationships.push({ 
+                    id: item.id, 
+                    updates: { documentation: documentation }
+                });
+            }
+        }
+    }
+
+    return updates;
+}
+
+async function retryOperation(operation) {
+    for (let i = 0; i < MAX_RETRIES; i++) {
+        try {
+            return await operation();
+        } catch (error) {
+            if (error.message.includes("Read timed out") && i < MAX_RETRIES - 1) {
+                log.warn(`Operation attempt failed, retrying`, { attempt: i + 1, maxRetries: MAX_RETRIES, delay: RETRY_DELAY });
+                Thread.sleep(RETRY_DELAY);
+            } else {
+                throw error;
+            }
+        }
+    }
+}
+
+function applyUpdates(updates) {
+    log.info('Applying documentation updates');
+    
+    // Update view
+    if (updates.view && updates.view.id) {
+        let view = $('#' + updates.view.id);
+        if (view.size() > 0) {
+            if (updates.view.documentation) {
+                view.first().documentation = updates.view.documentation;
+            }
+            log.debug('View updated', { viewName: view.first().name });
+        } else {
+            log.error('View not found', { viewId: updates.view.id });
+        }
+    }
+    
+    // Update elements
+    if (updates.elements && Array.isArray(updates.elements)) {
+        updates.elements.forEach(elementUpdate => {
+            let element = $('#' + elementUpdate.id);
+            if (element.size() > 0) {
+                if (elementUpdate.updates.documentation) {
+                    element.first().documentation = elementUpdate.updates.documentation;
+                }
+                log.debug('Element updated', { elementName: element.first().name });
+            } else {
+                log.error('Element not found', { elementId: elementUpdate.id });
+            }
+        });
+    }
+    
+    // Update relationships
+    if (GENERATE_RELATIONSHIP_DOCS && updates.relationships && Array.isArray(updates.relationships)) {
+        updates.relationships.forEach(relationshipUpdate => {
+            let relationship = $('#' + relationshipUpdate.id);
+            if (relationship.size() > 0) {
+                if (relationshipUpdate.updates.documentation) {
+                    relationship.first().documentation = relationshipUpdate.updates.documentation;
+                }
+                log.debug('Relationship updated', { relationshipName: relationship.first().name || "Unnamed relationship" });
+            } else {
+                log.error('Relationship not found', { relationshipId: relationshipUpdate.id });
+            }
+        });
+    }
+    
+    log.info('Documentation updates applied successfully');
+}
+
+async function generateAndApplyDocumentation(view) {
+    try {
+        log.info('Starting documentation generation and application', { viewName: view.name });
+        
+        const updates = await generateViewDocumentation(view);
+        
+        if (updates) {
+            log.debug('Documentation updates generated successfully');
+            applyUpdates(updates);
+            log.info('Documentation generation and application complete');
+        } else {
+            log.error('Failed to generate documentation updates');
+        }
+    } catch (error) {
+        log.error('Error in documentation generation process', { error: error.toString() });
+    }
+}
+
+// Main execution
+const selectedView = $(selection).filter("archimate-diagram-model").first();
+
+if (selectedView) {
+    generateAndApplyDocumentation(selectedView);
+} else {
+    log.error('No view selected. Please select a view and run the script again.');
+}

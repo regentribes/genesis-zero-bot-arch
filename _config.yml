@@ -1,0 +1,13 @@
+title: RegenTribes ArchiMate Models
+description: Enterprise architecture models for regenerative communities
+theme: minima
+plugins: []
+github:
+  repository_url: https://github.com/regentribes/genesis-zero-bot-archimate
+
+exclude:
+  - _site/
+  - .github/
+  - build.py
+  - "*.archimate"
+  - exports/

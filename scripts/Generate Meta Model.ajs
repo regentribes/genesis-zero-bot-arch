@@ -1,0 +1,486 @@
+/**
+ * @name Generate Meta Model
+ * @description This script generates an ArchiMate meta model based on an uploaded image using the OpenAI API, and allows editing and saving of the result.
+ * @version 3.3
+ * @author Claude AI Assistant
+ * @lastModifiedDate 2024-08-18
+ */
+
+console.clear();
+console.show();
+
+const { OpenAIClient, Message, GenerateOptions, ROLES } = require("./lib/openaiClient");
+const jarchiLogger = require("./lib/jarchiLogger");
+const log = jarchiLogger.createLogger("GenerateMetaModel", __DIR__);
+
+// Initialize OpenAI client
+const openaiClient = new OpenAIClient();
+
+// Import necessary Java types
+const SWT = Java.type("org.eclipse.swt.SWT");
+const Shell = Java.type("org.eclipse.swt.widgets.Shell");
+const Display = Java.type("org.eclipse.swt.widgets.Display");
+const FileDialog = Java.type("org.eclipse.swt.widgets.FileDialog");
+const File = Java.type("java.io.File");
+const FileWriter = Java.type("java.io.FileWriter");
+const MessageDialog = Java.type("org.eclipse.jface.dialogs.MessageDialog");
+const Dialog = Java.type("org.eclipse.jface.dialogs.Dialog");
+const Text = Java.type("org.eclipse.swt.widgets.Text");
+const Button = Java.type("org.eclipse.swt.widgets.Button");
+const GridData = Java.type("org.eclipse.swt.layout.GridData");
+const GridLayout = Java.type("org.eclipse.swt.layout.GridLayout");
+const IDialogConstants = Java.type("org.eclipse.jface.dialogs.IDialogConstants");
+
+// Global variable to store the generated meta model
+let generatedMetaModel = null;
+
+// Function to get base64 encoded image data
+function getBase64Image(filePath) {
+    log.debug("Getting base64 image for file: " + filePath);
+    const imageFile = new File(filePath);
+    const imageBytes = java.nio.file.Files.readAllBytes(imageFile.toPath());
+    return java.util.Base64.getEncoder().encodeToString(imageBytes);
+}
+
+// Function to generate meta model using OpenAI API
+function generateMetaModel(base64Image) {
+    return new Promise((resolve, reject) => {
+        log.debug("Generating meta model from base64 image");
+        const prompt = `Analyze this ArchiMate model image and provide a structured output of the allowed elements and relationships. Format the response as a JSON schema that can be used for validating ArchiMate models. 
+        The schema must precisely encode which source and target types are allowed for each allowed relationship type. If the label of an element does not match a valid ArchiMate, use the visual shape and the icon to make a judgement as to which element it is.
+        
+        Remember that in ArchiMate names SPACE is replaced with HYPHEN (-), and are always in small caps. Names of relationships always end with "-relationship".
+
+        IMPORTANT! Only include combinations of relationships that are valid according the supplied image! In the AnyOf section, ONLY include 1 combination of type, source, and target!
+        NOTE! Aggregation and composition relationships have the relationship reversed regarding source and target. The empty and filled diamonds are at the source NOT the target!
+        
+
+
+        This is an expample JSON Schema meta model:
+
+ {
+  "type": "object",
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "stakeholder",
+              "driver",
+              "assessment",
+              "goal",
+              "outcome",
+              "principle",
+              "requirement",
+              "constraint",
+              "course-of-action",
+              "capability",
+              "resource",
+              "value",
+              "value-stream"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "name",
+          "description"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "relationships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "target": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "source",
+          "target"
+        ],
+        "additionalProperties": false,
+        "anyOf": [
+          { "type" : "object",
+            "properties": {
+              "type": {
+                "type" : "string",
+                "enum": ["realization-relationship"]
+              },
+              "source": {
+                "enum": [
+                  "goal"
+                ]
+              },
+              "target": {
+                "enum": [
+                  "outcome",
+                ]
+              }
+            },
+            "required": ["type", "source", "target"],
+            "additionalProperties": false
+          },
+          {
+            "type" : "object",
+            "properties": {
+              "type": {
+                "type" : "string",
+                "enum": ["association-relationship"]
+              },
+              "source": {
+                "enum": [
+                  "outcome"
+                ]
+              },
+              "target": {
+                "enum": [
+                  "value"
+                ]
+              }
+            },
+            "required": ["type", "source", "target"],
+            "additionalProperties": false
+          },
+          {
+            "type" : "object",
+            "properties": {
+              "type": {
+                "type" : "string",
+                "enum": ["assignment-relationship"]
+              },
+              "source": {
+                "enum": [
+                  "capability"
+                ]
+              },
+              "target": {
+                "enum": [
+                  "resource"
+                ]
+              }
+            },
+            "required": ["type", "source", "target"],
+            "additionalProperties": false
+          },
+          {
+            "type" : "object",
+            "properties": {
+              "type": {
+                "type" : "string",
+                "enum": ["serving-relationship"]
+              },
+              "source": {
+                "enum": [
+                  "capability"
+                ]
+              },
+              "target": {
+                "enum": [
+                  "value-stream"
+                ]
+              }
+            },
+            "required": ["type", "source", "target"],
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "nodes",
+    "relationships"
+  ],
+  "additionalProperties": false
+}`;
+
+        const messages = [
+            new Message(
+                ROLES.SYSTEM,
+                "You are an AI assistant that analyzes ArchiMate model images and generates meta models."
+            ),
+            new Message(ROLES.USER, [
+                { type: "text", text: prompt },
+                { type: "image_url", image_url: { url: `data:image/jpeg;base64,${base64Image}` } },
+            ]),
+        ];
+
+        const options = new GenerateOptions({
+            model: "gpt-4o-2024-08-06",
+            max_tokens: 2000,
+            temperature: 0.3,
+            response_format: { type: "json_object" },
+        });
+
+        log.debug("Sending request to OpenAI API");
+        openaiClient
+            .generateChatCompletion(messages, [], options)
+            .then((response) => {
+                log.debug("Received response from OpenAI API");
+                resolve(JSON.parse(response.choices[0].message.content));
+            })
+            .catch((error) => {
+                log.error("Error generating meta model", { error: error.toString() });
+                reject(error);
+            });
+    });
+}
+
+// Function to copy JSON to clipboard
+function copyToClipboard(jsonString) {
+    log.debug("Copying JSON to clipboard");
+    const JArray = Java.type("java.lang.reflect.Array");
+    const JString = Java.type("java.lang.String");
+    const Clipboard = Java.type("org.eclipse.swt.dnd.Clipboard");
+    const cb = new Clipboard(shell.getDisplay());
+    const textTransfer = Java.type("org.eclipse.swt.dnd.TextTransfer").getInstance();
+    const text = new JString(jsonString);
+
+    let arrayOfTransfers = JArray.newInstance(Java.type("org.eclipse.swt.dnd.TextTransfer"), 1);
+    let arrayOfTexts = JArray.newInstance(JString, 1);
+    arrayOfTransfers[0] = textTransfer;
+    arrayOfTexts[0] = text;
+
+    cb.setContents(arrayOfTexts, arrayOfTransfers);
+    log.debug("JSON copied to clipboard");
+}
+
+// Create the result dialog
+const ResultDialog = Java.extend(Dialog);
+const resultDialog = new ResultDialog(shell, {
+    createDialogArea: function (parent) {
+        const container = Java.super(resultDialog).createDialogArea(parent);
+        container.setLayout(new GridLayout(1, false));
+
+        this.textArea = new Text(container, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL);
+        const gridData = new GridData(GridData.FILL_BOTH);
+        gridData.heightHint = 400;
+        gridData.widthHint = 600;
+        this.textArea.setLayoutData(gridData);
+
+        if (generatedMetaModel) {
+            this.textArea.setText(JSON.stringify(generatedMetaModel, null, 2));
+        }
+
+        return container;
+    },
+
+    createButtonsForButtonBar: function (parent) {
+        Java.super(resultDialog).createButton(parent, IDialogConstants.OK_ID, "Close", true);
+        const saveButton = Java.super(resultDialog).createButton(parent, IDialogConstants.CLIENT_ID, "Save", false);
+
+        saveButton.addListener(SWT.Selection, (event) => {
+            log.debug("Save button clicked");
+            const fileDialog = new FileDialog(resultDialog.getShell(), SWT.SAVE);
+            fileDialog.setFilterExtensions(["*.json"]);
+            const filePath = fileDialog.open();
+            if (filePath) {
+                try {
+                    let metaModelJson = JSON.parse(this.textArea.getText());
+                    metaModelJson = sanitizeMetaModel(metaModelJson);
+                    const sanitizedJson = JSON.stringify(metaModelJson, null, 2);
+                    this.textArea.setText(sanitizedJson); // Update the text area with sanitized JSON
+                    const writer = new FileWriter(filePath);
+                    writer.write(sanitizedJson);
+                    writer.close();
+                    log.info("Sanitized meta model saved successfully", { path: filePath });
+                    MessageDialog.openInformation(
+                        resultDialog.getShell(),
+                        "Success",
+                        "Sanitized meta model saved successfully."
+                    );
+                } catch (error) {
+                    log.error("Error saving meta model", { error: error.toString() });
+                    MessageDialog.openError(
+                        resultDialog.getShell(),
+                        "Error",
+                        "Failed to save meta model: " + error.toString()
+                    );
+                }
+            } else {
+                log.debug("File save cancelled");
+            }
+        });
+    },
+
+    configureShell: function (newShell) {
+        Java.super(resultDialog).configureShell(newShell);
+        newShell.setText("Generated Meta Model");
+        newShell.setSize(800, 600);
+    },
+});
+
+function sanitizeMetaModel(metaModel) {
+    const validNodes = new Set();
+    const validRelationships = new Set();
+
+    // Test nodes
+    metaModel.properties.nodes.items.properties.type.enum.forEach((nodeType) => {
+        try {
+            const testElement = model.createElement(nodeType, "Test " + nodeType);
+            validNodes.add(nodeType);
+            testElement.delete();
+        } catch (error) {
+            log.warn(`Invalid node type: ${nodeType}`, { error: error.toString() });
+        }
+    });
+
+    // Update valid node types in the schema
+    metaModel.properties.nodes.items.properties.type.enum = Array.from(validNodes);
+
+    // Test relationships
+    metaModel.properties.relationships.items.anyOf.forEach((relation) => {
+        const relationType = relation.properties.type.enum[0];
+        const sources = relation.properties.source.enum;
+        const targets = relation.properties.target.enum;
+        const elements = new Map();
+        sources.forEach((source) => {
+            targets.forEach((target) => {
+                if (validNodes.has(source) && validNodes.has(target)) {
+                    try {
+                        const sourceElement = model.createElement(source, "Test Source");
+                        const targetElement = model.createElement(target, "Test Target");
+                        elements.set(sourceElement.id, sourceElement);
+                        elements.set(targetElement.id, targetElement);
+                        let testRelationship = model.createRelationship(
+                            relationType,
+                            "Test Relationship",
+                            sourceElement,
+                            targetElement
+                        );
+                        validRelationships.add(JSON.stringify({ type: relationType, source, target }));
+                    } catch (error) {
+                        // If creation fails, try reversing source and target
+                        try {
+                            log.debug(
+                                `Trying reversing relationship: ${relationType} between ${source} and ${target}`,
+                                { error: error.toString() }
+                            );
+                            const sourceElement = model.createElement(target, "Test Source");
+                            const targetElement = model.createElement(source, "Test Target");
+                            elements.set(sourceElement.id, sourceElement);
+                            elements.set(targetElement.id, targetElement);
+                            let testRelationship = model.createRelationship(
+                                relationType,
+                                "Test Relationship",
+                                sourceElement,
+                                targetElement
+                            );
+                            validRelationships.add(
+                                JSON.stringify({ type: relationType, source: target, target: source })
+                            );
+                            log.debug(
+                                `Reversing relationship worked: ${relationType} between ${target} and ${source}`,
+                                { error: error.toString() }
+                            );
+                        } catch (reverseError) {
+                            log.warn(`Invalid relationship: ${relationType} between ${source} and ${target}`, {
+                                error: reverseError.toString(),
+                            });
+                        }
+                    }
+                }
+            });
+        });
+        elements.forEach((value, key) => {
+            try {
+                value.delete();
+            } catch {}
+        });
+    });
+
+    // Update valid relationships in the schema
+    metaModel.properties.relationships.items.anyOf = Array.from(validRelationships).map((rel) => {
+        const { type, source, target } = JSON.parse(rel);
+        return {
+            type: "object",
+            properties: {
+                type: {
+                    type: "string",
+                    enum: [type],
+                },
+                source: {
+                    enum: [source],
+                },
+                target: {
+                    enum: [target],
+                },
+            },
+            required: ["type", "source", "target"],
+            additionalProperties: false,
+        };
+    });
+
+    return metaModel;
+}
+
+// Main execution
+(function () {
+    try {
+        log.info("Starting meta model generation process");
+
+        // Step 1: Prompt for image file
+        const fileDialog = new FileDialog(shell, SWT.OPEN);
+        fileDialog.setFilterExtensions(["*.jpg", "*.png", "*.jpeg"]);
+        fileDialog.setText("Select an ArchiMate model image");
+        const filePath = fileDialog.open();
+
+        if (filePath) {
+            log.info("File selected: " + filePath);
+
+            // Step 2: Generate meta model
+            const base64Image = getBase64Image(filePath);
+            log.debug("Image converted to base64");
+
+            MessageDialog.openInformation(
+                shell,
+                "Processing",
+                "Generating meta model. This may take a few moments. Click OK to proceed!"
+            );
+
+            generateMetaModel(base64Image)
+                .then((metaModel) => {
+                    log.debug("Meta model generated successfully");
+                    generatedMetaModel = sanitizeMetaModel(metaModel);
+                    copyToClipboard(JSON.stringify(generatedMetaModel, null, 2));
+                    log.info("Sanitized meta model copied to clipboard");
+
+                    // Step 3: Show editable dialog
+                    resultDialog.open();
+                })
+                .catch((error) => {
+                    log.error("Error generating meta model", { error: error.toString() });
+                    MessageDialog.openError(shell, "Error", "Failed to generate meta model: " + error.toString());
+                });
+        } else {
+            log.info("File selection cancelled");
+        }
+    } catch (error) {
+        log.error("Error in main execution", { error: error.toString() });
+        MessageDialog.openError(shell, "Error", "An unexpected error occurred: " + error.toString());
+    }
+})();

@@ -1,0 +1,342 @@
+/**
+ * @name Generate Model from Meta Model
+ * @description This script generates an ArchiMate model based on a selected meta model JSON file using the OpenAI API.
+ * @version 1.0
+ * @author Claude AI Assistant
+ * @lastModifiedDate 2024-08-18
+ */
+
+console.clear();
+console.show();
+
+const { OpenAIClient, Message, GenerateOptions, ROLES } = require("./lib/openaiClient");
+const modelManipulation = require("./lib/modelManipulation");
+
+// Initialize logger
+const jarchiLogger = require("./lib/jarchiLogger");
+const log = jarchiLogger.createLogger("GenerateModelFromMetaModel", __DIR__);
+
+// Initialize OpenAI client
+const openaiClient = new OpenAIClient();
+
+const layoutAlgorithms = require('./lib/layoutAlgorithms');
+
+// Import necessary Java types
+const File = Java.type("java.io.File");
+const Files = Java.type('java.nio.file.Files');
+const Charset = Java.type('java.nio.charset.Charset');
+const String = Java.type('java.lang.String');
+const CountDownLatch = Java.type('java.util.concurrent.CountDownLatch');
+const SwingUtilities = Java.type('javax.swing.SwingUtilities');
+const TimeUnit = Java.type('java.util.concurrent.TimeUnit');
+const Dialog = Java.extend(Java.type('org.eclipse.jface.dialogs.Dialog'));
+const Shell = Java.type('org.eclipse.swt.widgets.Shell');
+const Text = Java.type('org.eclipse.swt.widgets.Text');
+const Label = Java.type('org.eclipse.swt.widgets.Label');
+const Combo = Java.type('org.eclipse.swt.widgets.Combo');
+const Button = Java.type('org.eclipse.swt.widgets.Button');
+const GridData = Java.type('org.eclipse.swt.layout.GridData');
+const GridLayout = Java.type('org.eclipse.swt.layout.GridLayout');
+const SWT = Java.type('org.eclipse.swt.SWT');
+const Point = Java.type('org.eclipse.swt.graphics.Point');
+const IDialogConstants = Java.type('org.eclipse.jface.dialogs.IDialogConstants');
+
+// Constants
+// const MODEL = "gpt-4o-mini";
+const MODEL = "gpt-4o-2024-08-06";
+const MAX_TOKENS = 4000;
+const TEMPERATURE = 0.7;
+
+// Function to load JSON schema files from the schemas directory
+function loadSchemaFiles() {
+    const schemasDir = new File(__DIR__, "schemas");
+    const allFiles = schemasDir.listFiles();
+    return allFiles
+        .filter(file => file.isFile() && file.getName().toLowerCase().endsWith('.json'))
+        .map(file => file.getName());
+}
+
+// Function to read JSON schema file
+function readSchemaFile(fileName) {
+    try {
+        const file = new File(new File(__DIR__, "schemas"), fileName);
+        log.debug(`Attempting to read schema file: ${file.getAbsolutePath()}`);
+        
+        if (!file.exists()) {
+            log.error(`File does not exist: ${file.getAbsolutePath()}`);
+            throw new Error(`Schema file does not exist: ${fileName}`);
+        }
+        
+        if (!file.canRead()) {
+            log.error(`Cannot read file: ${file.getAbsolutePath()}`);
+            throw new Error(`Cannot read schema file: ${fileName}`);
+        }
+
+        // Read the file content as a byte array
+        const bytes = Files.readAllBytes(file.toPath());
+        
+        // Convert byte array to string
+        let content = new String(bytes, Charset.forName("UTF-8"));
+        
+        // Remove any BOM characters
+        content = content.replace(/^\uFEFF/, '');
+        
+        // Remove any leading non-printable characters, commas, and numbers
+        content = content.replace(/^[\s\S]*?(?={)/, '');
+        
+        if (content.trim().length === 0) {
+            log.error(`File is empty after cleaning: ${fileName}`);
+            throw new Error(`Schema file is empty after cleaning: ${fileName}`);
+        }
+        
+        try {
+            return JSON.parse(content);
+        } catch (parseError) {
+            log.error(`Error parsing JSON from file: ${fileName}`, { error: parseError.toString() });
+            log.debug(`Content causing parse error:`);
+            log.debug(content);
+            throw new Error(`Invalid JSON in schema file: ${fileName}. Error: ${parseError.message}`);
+        }
+    } catch (error) {
+        log.error(`Error reading schema file: ${fileName}`, { error: error.toString() });
+        throw error;
+    }
+}
+
+// JSON Schema for model generation
+let modelSchema = {
+    description: "A data structure for an ArchiMate model",
+    name: "schema",
+    strict: true,
+    schema: {} // This will be populated with the selected schema
+};
+
+// Function to get user input with schema selection
+function getUserInputWithSchemaSelection() {
+    let result = null;
+    let schemaCombo = null;
+    let inputText = null;
+    let expandCheckbox = null;
+
+    const dialog = new Dialog(shell, {
+        createDialogArea: function(parent) {
+            const container = Java.super(dialog).createDialogArea(parent);
+            const layout = new GridLayout(2, false);
+            container.setLayout(layout);
+
+            new Label(container, SWT.NONE).setText("Select Meta Model Schema:");
+            schemaCombo = new Combo(container, SWT.READ_ONLY);
+            schemaCombo.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+            const schemaFiles = loadSchemaFiles();
+            log.debug(`Loaded schema files: ${schemaFiles.join(", ")}`);
+            schemaCombo.setItems(schemaFiles);
+            if (schemaFiles.length > 0) {
+                schemaCombo.select(0);
+                log.debug(`Selected initial schema: ${schemaFiles[0]}`);
+            } else {
+                log.warn("No schema files found");
+            }
+
+            new Label(container, SWT.NONE).setText("Model Description:");
+            inputText = new Text(container, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL);
+            const gd = new GridData(GridData.FILL_BOTH);
+            gd.horizontalSpan = 2;
+            gd.heightHint = 400;
+            gd.widthHint = 600;
+            inputText.setLayoutData(gd);
+
+            expandCheckbox = new Button(container, SWT.CHECK);
+            expandCheckbox.setText("Expand existing model");
+            expandCheckbox.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
+            expandCheckbox.setSelection(false);
+
+            return container;
+        },
+
+        createButtonsForButtonBar: function(parent) {
+            Java.super(dialog).createButton(parent, IDialogConstants.OK_ID, "Generate/Expand", true);
+            Java.super(dialog).createButton(parent, IDialogConstants.CANCEL_ID, IDialogConstants.CANCEL_LABEL, false);
+        },
+
+        buttonPressed: function(buttonId) {
+            if (buttonId === IDialogConstants.OK_ID) {
+                const selectedSchemaIndex = schemaCombo.getSelectionIndex();
+                const userInput = inputText.getText().trim();
+                const isExpand = expandCheckbox.getSelection();
+                
+                if (selectedSchemaIndex === -1) {
+                    window.alert("Please select a schema.");
+                    return;
+                }
+                
+                if (!userInput) {
+                    window.alert("Please enter a description.");
+                    return;
+                }
+                
+                try {
+                    const selectedSchema = schemaCombo.getItem(selectedSchemaIndex);
+                    modelSchema.schema = readSchemaFile(selectedSchema);
+                    result = { 
+                        schema: selectedSchema, 
+                        input: userInput, 
+                        action: isExpand ? 'expand' : 'generate' 
+                    };
+                    log.debug(`Dialog result set: ${JSON.stringify(result)}`);
+                    Java.super(dialog).buttonPressed(buttonId);
+                } catch (error) {
+                    log.error("Error processing selected schema", { error: error.toString() });
+                    window.alert("Error processing selected schema: " + error.toString());
+                }
+            } else if (buttonId === IDialogConstants.CANCEL_ID) {
+                result = null;
+                Java.super(dialog).buttonPressed(buttonId);
+            }
+        },
+
+        configureShell: function(newShell) {
+            Java.super(dialog).configureShell(newShell);
+            newShell.setText("Generate/Expand Model from Meta Model");
+        },
+
+        getInitialSize: function() {
+            const size = Java.super(dialog).getInitialSize();
+            return new Point(Math.max(size.x, 450), Math.max(size.y, 350));
+        }
+    });
+
+    dialog.setBlockOnOpen(true);
+    dialog.open();
+
+    log.debug(`Final dialog result: ${JSON.stringify(result)}`);
+    return result;
+}
+
+async function expandModelFromMetaModel(existingModel, userInput, schema) {
+    const prompt = `Expand the existing ArchiMate model based on the following input and meta model schema:
+
+    Existing Model:
+    ${JSON.stringify(existingModel, null, 2)}
+
+    User input for expansion: ${userInput}
+
+    Meta Model Schema:
+    ${JSON.stringify(schema, null, 2)}
+
+    Provide the expanded model as a JSON structure with 'nodes' and 'relationships' arrays, following the specified schema.
+    Ensure that all relationships use valid source and target IDs from the nodes array.
+    IMPORTANT! Do not make relationships between nodes that are not defined in the nodes array!
+
+    Guidelines:
+    1. Add new elements and relationships that expand upon the existing model based on the user input.
+    2. Ensure new elements and relationships are compatible with the existing model structure.
+    3. Use a variety of element types and relationships as allowed by the schema.
+    4. Provide clear and descriptive names for all new elements and relationships.
+    5. Include brief descriptions for each new element to explain its role in the expanded model.
+    `;
+
+    const messages = [new Message(ROLES.USER, prompt)];
+
+    const options = new GenerateOptions({
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        temperature: TEMPERATURE,
+        response_format: { type: "json_schema", json_schema: modelSchema },
+    });
+
+    try {
+        const response = await openaiClient.generateChatCompletion(messages, [], options);
+        return JSON.parse(response.choices[0].message.content);
+    } catch (error) {
+        log.error("Error expanding model from meta model", { error: error.toString() });
+        throw error;
+    }
+}
+
+async function generateModelFromMetaModel(userInput, schema) {
+    const prompt = `Generate an ArchiMate model based on the following input and meta model schema:
+
+    User input: ${userInput}
+
+    Meta Model Schema:
+    ${JSON.stringify(schema, null, 2)}
+
+    Provide the model as a JSON structure with 'nodes' and 'relationships' arrays, following the specified schema.
+    Ensure that all relationships use valid source and target IDs from the nodes array.
+    IMPORTANT! Do not make relationships between nodes that are not defined in the nodes array!
+
+    Guidelines:
+    1. Create a comprehensive model that covers various aspects described in the user input.
+    2. Use a variety of element types and relationships as allowed by the schema.
+    3. Ensure logical connections between elements.
+    4. Provide clear and descriptive names for all elements and relationships.
+    5. Include brief descriptions for each element to explain its role in the model.
+    `;
+
+    const messages = [new Message(ROLES.USER, prompt)];
+
+    const options = new GenerateOptions({
+        model: MODEL,
+        max_tokens: MAX_TOKENS,
+        temperature: TEMPERATURE,
+        response_format: { type: "json_schema", json_schema: modelSchema },
+    });
+
+    try {
+        const response = await openaiClient.generateChatCompletion(messages, [], options);
+        modelJson =  JSON.parse(response.choices[0].message.content);
+        return modelJson;
+    } catch (error) {
+        log.error("Error generating model from meta model", { error: error.toString() });
+        throw error;
+    }
+}
+
+// Main execution
+(async function () {
+    try {
+        const selectedView = $(selection).filter("archimate-diagram-model").first();
+        if (!selectedView) {
+            window.alert("Please select a view before running this script.");
+            return;
+        }
+
+        const result = getUserInputWithSchemaSelection();
+        if (result && result.input) {
+            log.info(`${result.action === 'expand' ? 'Expanding' : 'Generating'} model from meta model`);
+            
+            let modelJson;
+            if (result.action === 'expand') {
+                const existingModel = modelManipulation.createModelJson();
+                modelJson = await expandModelFromMetaModel(existingModel, result.input, modelSchema.schema);
+            } else {
+                modelJson = await generateModelFromMetaModel(result.input, modelSchema.schema);
+            }
+            
+            log.info("Updating ArchiMate model", modelJson);
+            modelManipulation.updateView(selectedView, modelJson);
+            log.info(`Model ${result.action === 'expand' ? 'expansion' : 'generation'} complete`);
+
+            // Apply force-directed layout
+            log.info("Applying force-directed layout");
+            const layoutOptions = {
+                width: 2000,
+                height: 2000,
+                iterations: 100,
+                k: 1,
+                gravity: 0.1,
+                cooling: 0.95
+            };
+            const layoutedJson = layoutAlgorithms.applyLayout(selectedView, 'fruchtermanReingold', layoutOptions);
+            modelManipulation.updateViewFromJSON(selectedView, layoutedJson);
+            log.info("Layout applied successfully");
+
+        } else {
+            log.warn("User cancelled or provided no input");
+        }
+    } catch (error) {
+        log.error("Error in main execution", { error: error.toString() });
+        window.alert("An error occurred: " + error.toString());
+    }
+})();
+

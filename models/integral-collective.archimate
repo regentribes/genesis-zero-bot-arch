@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<archimate:model xmlns:archimate="http://www.archimatetool.com/archimate"
+  name="Integral Collective Node Architecture"
+  id="model-integral-collective"
+  version="1.0.0"
+  uuid="integral-collective-v100">
+
+  <property key="domain" value="integral-collective"/>
+  <property key="layer" value="all"/>
+
+  <!-- ═══════════════════════════════════════════════════
+       FIVE SUBSYSTEMS (OAD, ITC, CDS, COS, FRS)
+       ═══════════════════════════════════════════════════ -->
+
+  <!-- OAD: Open Architecture Design (Strategy) -->
+  <business-actor id="actor-oad" name="OAD Subsystem" documentation="Open Architecture Design — strategic positioning and system design."/>
+  <business-service id="srv-oad-design" name="Architecture Design Service" documentation="Designs system architecture aligned with Integral Collective principles."/>
+  <business-process id="proc-oad-strategy" name="Strategy Formulation" documentation="Develops and maintains system strategy."/>
+
+  <!-- ITC: Integral TRIZ Constructor (Innovation) -->
+  <business-actor id="actor-itc" name="ITC Subsystem" documentation="Integral TRIZ Constructor — innovation and problem-solving."/>
+  <business-service id="srv-itc-innovation" name="Innovation Service" documentation="Applies TRIZ problem-solving for novel challenges."/>
+  <business-process id="proc-itc-contradiction" name="Contradiction Analysis" documentation="Identifies and resolves physical/technical contradictions."/>
+
+  <!-- CDS: Collective Decision System (Governance) -->
+  <business-actor id="actor-cds" name="CDS Subsystem" documentation="Collective Decision System — governance and decision-making."/>
+  <business-service id="srv-cds-voting" name="Decision Voting Service" documentation="Facilitates collective decision-making."/>
+  <business-process id="proc-cds-consensus" name="Consensus Building" documentation="Builds consensus across node participants."/>
+
+  <!-- COS: Commons Operating System (Resource) -->
+  <business-actor id="actor-cos" name="COS Subsystem" documentation="Commons Operating System — resource management and allocation."/>
+  <business-service id="srv-cos-allocation" name="Resource Allocation Service" documentation="Manages shared resource allocation."/>
+  <business-process id="proc-cos-tracking" name="Resource Tracking" documentation="Tracks resource usage and availability."/>
+
+  <!-- FRS: Federation Rules System (Protocol) -->
+  <business-actor id="actor-frs" name="FRS Subsystem" documentation="Federation Rules System — protocol and standard enforcement."/>
+  <business-service id="srv-frs-compliance" name="Compliance Service" documentation="Enforces federation rules and standards."/>
+  <business-process id="proc-frs-updates" name="Rule Updates" documentation="Manages updates to federation rules."/>
+
+  <!-- Cross-subsystem communication -->
+  <business-collaboration id="collab-five" name="Five Subsystem Assembly" documentation="Assembly of all five subsystems for holistic operation."/>
+
+  <!-- Relationships between subsystems -->
+  <relationship id="rel-oad-itc" type="serving" source="#actor-oad" target="#actor-itc"/>
+  <relationship id="rel-oad-cds" type="serving" source="#actor-oad" target="#actor-cds"/>
+  <relationship id="rel-oad-cos" type="serving" source="#actor-oad" target="#actor-cos"/>
+  <relationship id="rel-oad-frs" type="serving" source="#actor-oad" target="#actor-frs"/>
+  <relationship id="rel-itc-cds" type="triggering" source="#actor-itc" target="#actor-cds"/>
+  <relationship id="rel-cds-cos" type="assignment" source="#actor-cds" target="#actor-cos"/>
+  <relationship id="rel-cos-frs" type="realization" source="#actor-cos" target="#actor-frs"/>
+  <relationship id="rel-frs-oad" type="influence" source="#actor-frs" target="#actor-oad"/>
+
+  <!-- Application layer for Integral Collective -->
+  <application-component id="app-ead" name="EAD Engine" documentation="Evolutionary Algorithm Design for system optimization."/>
+  <application-component id="app-triz" name="TRIZ Engine" documentation="Problem-solving engine using 40 inventive principles."/>
+  <application-component id="app-fcl" name="FCL Processor" documentation="Formation Coding Language processor for spatial coordination."/>
+  <application-component id="app-wiki" name="Wiki Engine" documentation="OpenClaw wiki for knowledge management."/>
+  <application-component id="app-adr" name="ADR Engine" documentation="Architecture decision record management."/>
+
+  <!-- Technology infrastructure -->
+  <node id="node-primary" name="Primary Node" documentation="Main compute node for Integral Collective operations."/>
+  <node id="node-federated" name="Federated Node" documentation="Distributed node for cross-collective coordination."/>
+
+  <artifact id="art-ead-weights" name="EAD Model Weights" documentation="Neural network weights for evolutionary algorithm."/>
+  <artifact id="art-triz-db" name="TRIZ Database" documentation="Contradiction matrix and inventive principle database."/>
+  <artifact id="art-fcl-rules" name="FCL Rules" documentation="Formation Coding Language grammar and rules."/>
+
+  <!-- Motivation elements -->
+  <goal id="goal-self-governance" name="Self-Governance" documentation="Integral Collective governs itself without external control."/>
+  <goal id="goal-post-monetary" name="Post-Monetary Exchange" documentation="Resource exchange without traditional currency."/>
+  <goal id="goal-regenerative" name="Regenerative Operations" documentation="All operations contribute to regenerative outcomes."/>
+
+  <principle id="prin-evidence" name="Evidence-Based" documentation="Decisions grounded in measurable evidence."/>
+  <principle id="prin-consensus" name="Consensus-Oriented" documentation="Decisions seek broad consensus before execution."/>
+  <principle id="prin-transparency" name="Full Transparency" documentation="All governance and resource decisions are transparent."/>
+
+  <!-- Strategy capabilities -->
+  <capability id="cap-evolution" name="Evolutionary Adaptation" documentation="System evolves based on feedback and outcomes."/>
+  <capability id="cap-triz" name="TRIZ Problem Solving" documentation="Novel solutions to contradictions."/>
+  <capability id="cap-federation" name="Federation Management" documentation="Coordinate across multiple Integral Collective nodes."/>
+
+  <!-- Application relationships -->
+  <relationship id="rel-ead-node" type="assignment" source="#app-ead" target="#node-primary"/>
+  <relationship id="rel-triz-oad" type="serving" source="#app-triz" target="#actor-oad"/>
+  <relationship id="rel-wiki-knowledge" type="serving" source="#app-wiki" target="#actor-itc"/>
+  <relationship id="rel-fcl-spatial" type="serving" source="#app-fcl" target="#node-federated"/>
+  <relationship id="rel-adr-frs" type="serving" source="#app-adr" target="#actor-frs"/>
+
+  <!-- Strategy → Capability → Application chain -->
+  <relationship id="rel-cap-evolution" type="composition" source="#cap-evolution" target="#app-ead"/>
+  <relationship id="rel-cap-triz" type="composition" source="#cap-triz" target="#app-triz"/>
+  <relationship id="rel-cap-fed" type="composition" source="#cap-federation" target="#app-fcl"/>
+
+  <!-- Goal influences capability -->
+  <relationship id="rel-goal-cap" type="influence" source="#goal-regenerative" target="#cap-evolution"/>
+
+</archimate:model>
