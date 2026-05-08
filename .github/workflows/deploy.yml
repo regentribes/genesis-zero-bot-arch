@@ -35,50 +35,41 @@ jobs:
 import re
 from pathlib import Path
 
-html_dir = Path("reports/html")
-index_path = Path("_site/index.html")
-index_path.parent.mkdir(exist_ok=True)
-
 model_count = len(list(Path("models").glob("*.archimate")))
-svg_count = 0
-if (html_dir / "diagrams").exists():
-    svg_count = len(list((html_dir / "diagrams").glob("*.svg")))
 
-dark_js = '''<script>
-document.addEventListener("DOMContentLoaded",function(){
-  var t=localStorage.getItem("theme")||"dark";
-  document.body.className=t;
-});
-</script>'''
-
-html = f'''<!DOCTYPE html>
+html = '''<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ArchiMate Models — RegenTribes</title>
 <style>
-:root{{--bg:#000;--text:#888;--heading:#fff;--muted:#555;--border:#222;--code-bg:#0a0a0a}}
-body{{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;margin:0;padding:2rem;transition:background .2s,color .2s}}
-.light{{--bg:#fff;--text:#333;--heading:#000;--muted:#888;--border:#e0e0e0;--code-bg:#f5f5f5}}
-a{{color:#4a9eff}}
-h1{{color:var(--heading);margin:0 0 1rem}}
-h2{{color:var(--heading);margin:2rem 0 .5rem;font-size:1.2rem}}
-p{{color:var(--muted);margin:0 0 1.5rem}}
-nav{{margin-bottom:2rem}}
-button{{background:var(--border);color:var(--text);border:1px solid var(--muted);padding:.3rem .8rem;cursor:pointer}}
-iframe{{width:100%;height:600px;border:1px solid var(--border);background:#fff;margin-top:1rem}}
-.grid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin:1rem 0}}
-.card{{background:var(--code-bg);border:1px solid var(--border);padding:1rem;border-radius:4px}}
-.card h3{{color:var(--heading);margin:0 0 .5rem;font-size:1rem}}
-.card p{{color:var(--muted);margin:0}}
+:root{--bg:#000;--text:#888;--heading:#fff;--muted:#555;--border:#222;--code-bg:#0a0a0a}
+body{background:var(--bg);color:var(--text);font-family:system-ui,sans-serif;margin:0;padding:2rem;transition:background .2s,color .2s}
+.light{--bg:#fff;--text:#333;--heading:#000;--muted:#888;--border:#e0e0e0;--code-bg:#f5f5f5}
+a{color:#4a9eff}
+h1{color:var(--heading);margin:0 0 1rem}
+h2{color:var(--heading);margin:2rem 0 .5rem;font-size:1.2rem}
+p{color:var(--muted);margin:0 0 1.5rem}
+nav{margin-bottom:2rem}
+button{background:var(--border);color:var(--text);border:1px solid var(--muted);padding:.3rem .8rem;cursor:pointer}
+iframe{width:100%;height:600px;border:1px solid var(--border);background:#fff;margin-top:1rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin:1rem 0}
+.card{background:var(--code-bg);border:1px solid var(--border);padding:1rem;border-radius:4px}
+.card h3{color:var(--heading);margin:0 0 .5rem;font-size:1rem}
+.card p{color:var(--muted);margin:0}
 </style>
-{dark_js}
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+  var t=localStorage.getItem("theme")||"dark";
+  document.body.className=t;
+});
+</script>
 </head>
 <body>
 <nav><button onclick="document.body.className=document.body.className==='dark'?'light':'dark';localStorage.setItem('theme',document.body.className)">&#9790;</button></nav>
 <h1>ArchiMate Models — RegenTribes</h1>
-<p>Enterprise architecture models. {model_count} models. Archi v5.7.0 via archimate-ci-image.</p>
+<p>Enterprise architecture models. ''' + str(model_count) + ''' models. Archi v5.7.0 via archimate-ci-image.</p>
 
 <h2>Regenerative Neighbourhood</h2>
 <div class="grid">
@@ -105,14 +96,14 @@ Built by <a href="https://github.com/regentribes/genesis-zero-bot-arch">genesis-
 </body>
 </html>'''
 
-index_path.write_text(html)
-print(f"Written: {index_path}")
+Path("_site/index.html").write_text(html)
+print("Custom index written")
 PYEOF
 
-      # ─── Run Archi HTML Report ────────────────────────────────────────────────
-      # Docker on ubuntu-latest supports:linux/amd64 containers.
-      # Uses Xvfb (virtual framebuffer) for headless GUI rendering.
-      # Generates: HTML, SVG, PNG diagrams from ArchiMate XML models.
+      # ─── Run Archi via Docker to generate HTML reports ─────────────────────────
+      # Docker available on ubuntu-latest (linux/amd64).
+      # Uses Xvfb for headless GUI rendering. No JArchi plugin needed.
+      # The archimate-ci-image container bundles Archi 5.7.0.
       - name: Run Archi HTML Report
         run: |
           docker run --rm \
@@ -120,12 +111,12 @@ PYEOF
             -v "${{ github.workspace }}/reports:/archi/report" \
             -e ARCHI_PROJECT_PATH=/archi/project \
             -e ARCHI_HTML_REPORT_ENABLED=true \
-            -e ARCHI_EXTRA_ARGS="--html.include-diagrams true --html.include-views true" \
             ghcr.io/woozymasta/archimate-ci-image:5.7.0-1.0.6
 
-      # ─── Deploy to gh-pages via deploy-archi-report action ─────────────────────
-      # This pushes the Archi HTML report to gh-pages branch at .archi_report/.
-      # Pages serves gh-pages branch as the website source.
+      # ─── Deploy Archi reports to gh-pages ────────────────────────────────────
+      # deploy-archi-report action pushes Archi HTML output to gh-pages branch
+      # via git subtree split. This is the Pages deployment mechanism.
+      # Pages is configured to serve from gh-pages branch (legacy build_type).
       - name: Deploy Archi report to gh-pages
         uses: WoozyMasta/archimate-ci-image@5.7.0-1.0.6
         with:
@@ -134,39 +125,46 @@ PYEOF
           githubPagesBranch: gh-pages
           gitSubtreePrefix: .archi_report
 
-      # ─── Commit custom index to gh-pages root ─────────────────────────────────
-      # The Archi report is at .archi_report/ on gh-pages.
-      # Our custom index.html goes at the root of gh-pages.
-      # We commit directly to gh-pages after the Archi action finishes.
-      - name: Commit custom index to gh-pages
+      # ─── Add custom index to gh-pages root ───────────────────────────────────
+      # After deploy-archi pushes Archi reports to .archi_report/ on gh-pages,
+      # we clone gh-pages and add our custom index.html at the root.
+      - name: Add custom index to gh-pages
         run: |
           set -e
-          # Clone gh-pages, copy our custom index, commit and push
-          workdir=$(mktemp -d)
-          git clone --depth 1 --branch gh-pages https://github.com/${{ github.repository }}.git "$workdir" 2>/dev/null || {
-            # gh-pages doesn't exist yet, create it
-            git branch gh-pages 2>/dev/null || true
-            git worktree add "$workdir" -b gh-pages 2>/dev/null || mkdir -p "$workdir"
+          GH_PAGES_DIR=$(mktemp -d)
+          git clone --depth 1 --branch gh-pages \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+            "$GH_PAGES_DIR" 2>/dev/null || {
+            # gh-pages may not exist yet, create it
+            git clone --depth 1 "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" "$GH_PAGES_DIR" 2>/dev/null || true
           }
-          # Copy custom index to gh-pages
-          cp _site/index.html "$workdir/" 2>/dev/null || cp _site/index.html "$workdir/index.html"
-          cd "$workdir" || cd "$HOME"
-          git config user.name "${{ github.actor }}" || true
-          git config user.email "${{ github.actor }}@users.noreply.github.com" || true
-          git add index.html 2>/dev/null || true
-          git commit -m "chore: update custom index page" 2>/dev/null || true
-          git push origin gh-pages 2>/dev/null || echo "gh-pages commit done"
-          rm -rf "$workdir"
+          # Copy custom index to gh-pages root
+          mkdir -p "$GH_PAGES_DIR"
+          cp _site/index.html "$GH_PAGES_DIR/"
+          cd "$GH_PAGES_DIR"
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          git add index.html
+          git commit -m "chore: add custom index page" || true
+          git push origin gh-pages || echo "push done or no changes"
+          rm -rf "$GH_PAGES_DIR"
           echo "Custom index committed to gh-pages"
 
-      # ─── Pages deployment ──────────────────────────────────────────────────────
-      # Pages is configured to serve from gh-pages branch (legacy).
-      # The deploy-pages action uploads the artifact as a fallback/secondary source.
-      - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '_site/'
-
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      # ─── Trigger Pages deployment ────────────────────────────────────────────
+      # Pages needs a new deployment event. We add an empty commit to gh-pages.
+      - name: Trigger Pages deployment
+        run: |
+          set -e
+          GH_PAGES_DIR=$(mktemp -d)
+          git clone --depth 1 --branch gh-pages \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
+            "$GH_PAGES_DIR" 2>/dev/null
+          cd "$GH_PAGES_DIR"
+          git config user.name "${{ github.actor }}"
+          git config user.email "${{ github.actor }}@users.noreply.github.com"
+          # Touch a file and commit to trigger Pages rebuild
+          date >> .deploy-trigger
+          git add .deploy-trigger
+          git commit -m "ci: trigger Pages deployment" || true
+          git push origin gh-pages || echo "push done"
+          rm -rf "$GH_PAGES_DIR"
