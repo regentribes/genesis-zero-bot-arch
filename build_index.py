@@ -42,19 +42,19 @@ document.addEventListener("DOMContentLoaded",function(){
 <div class="grid">
   <div class="card"><h3>Core Architecture</h3><p>Physical, knowledge, and governance infrastructure for regenerative communities.</p></div>
 </div>
-<iframe src=".archi_report/html/index.html?model=regen-neighbourhood" title="Regen Neighbourhood"></iframe>
+<iframe src="html/index.html?model=regen-neighbourhood" title="Regen Neighbourhood"></iframe>
 
 <h2>Integral Collective Node</h2>
 <div class="grid">
   <div class="card"><h3>OAD → ITC → CDS → COS → FRS</h3><p>Five-subsystem governance loop for regenerative community nodes.</p></div>
 </div>
-<iframe src=".archi_report/html/index.html?model=integral-collective" title="Integral Collective"></iframe>
+<iframe src="html/index.html?model=integral-collective" title="Integral Collective"></iframe>
 
 <h2>Reference Models (archimate-ci-image)</h2>
 <div class="grid">
   <div class="card"><h3>ArchiMetal Reference</h3><p>Full ArchiMate model demonstrating deploy-archi-report integration.</p></div>
 </div>
-<iframe src=".archi_report/html/index.html" title="ArchiMetal"></iframe>
+<iframe src="html/index.html" title="ArchiMetal"></iframe>
 
 <p style="margin-top:2rem;color:var(--muted);font-size:.85rem">
 Built by <a href="https://github.com/regentribes/genesis-zero-bot-arch">genesis-zero-bot-arch</a>
