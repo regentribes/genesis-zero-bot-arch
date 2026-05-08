@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded",function(){
 <body>
 <nav>
   <button onclick="document.body.className=document.body.className==='dark'?'light':'dark';localStorage.setItem('theme',document.body.className)">&#9790;</button>
-  <a href="html/index.html" style="color:#4a9eff;font-size:.85rem">&#8594; Open full Archi viewer</a>
+  <a href="index.html" style="color:#4a9eff;font-size:.85rem">&#8594; Open full Archi viewer</a>
 </nav>
 
 <h1>ArchiMate Models — RegenTribes</h1>
@@ -64,16 +64,16 @@ document.addEventListener("DOMContentLoaded",function(){
     <div class="card">
       <h3>Regenerative Neighbourhood</h3>
       <p>Physical, knowledge, and governance infrastructure for regenerative communities.</p>
-      <a href="html/index.html">&#8594; Open in Archi viewer</a>
-      <a href="ArchiMetal.jasperreports.pdf">&#8595; PDF Report</a>
-      <a href="ArchiMetal.jasperreports.docx">&#8595; DOCX Report</a>
+      <a href="index.html">&#8594; Open in Archi viewer</a>
+      <a href="ArchiMetal.pdf">&#8595; PDF Report</a>
+      <a href="ArchiMetal.docx">&#8595; DOCX Report</a>
     </div>
     <div class="card">
       <h3>Integral Collective Node</h3>
       <p>OAD → ITC → CDS → COS → FRS five-subsystem governance loop.</p>
-      <a href="html/index.html">&#8594; Open in Archi viewer</a>
-      <a href="ArchiMetal.jasperreports.pdf">&#8595; PDF Report</a>
-      <a href="ArchiMetal.jasperreports.docx">&#8595; DOCX Report</a>
+      <a href="index.html">&#8594; Open in Archi viewer</a>
+      <a href="ArchiMetal.pdf">&#8595; PDF Report</a>
+      <a href="ArchiMetal.docx">&#8595; DOCX Report</a>
     </div>
   </div>
 </div>
@@ -83,9 +83,9 @@ document.addEventListener("DOMContentLoaded",function(){
   <div class="card" style="max-width:600px">
     <h3>ArchiMetal (archimate-ci-image example)</h3>
     <p>Full ArchiMate model demonstrating the archimate-ci-image report generation.</p>
-    <a href="html/index.html">&#8594; Open in Archi viewer</a>
-    <a href="ArchiMetal.jasperreports.pdf">&#8595; PDF Report</a>
-    <a href="ArchiMetal.jasperreports.docx">&#8595; DOCX Report</a>
+    <a href="index.html">&#8594; Open in Archi viewer</a>
+    <a href="ArchiMetal.pdf">&#8595; PDF Report</a>
+    <a href="ArchiMetal.docx">&#8595; DOCX Report</a>
   </div>
 </div>
 
