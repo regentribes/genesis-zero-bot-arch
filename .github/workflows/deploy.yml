@@ -27,6 +27,8 @@ jobs:
       - name: Initialize gh-pages branch
         run: |
           set -e
+          git config --global user.email "genesis-zero-bot@users.noreply.github.com"
+          git config --global user.name "genesis-zero-bot"
           # Check if gh-pages exists on remote
           if git ls-remote --heads origin gh-pages | grep -q gh-pages; then
             echo "gh-pages already exists"
@@ -34,7 +36,7 @@ jobs:
             echo "Creating initial gh-pages branch"
             git checkout --orphan gh-pages
             git commit -m "Initial gh-pages deployment" --allow-empty
-            git push origin gh-pages || echo "Created gh-pages"
+            git push origin gh-pages
             git checkout main
           fi
 
