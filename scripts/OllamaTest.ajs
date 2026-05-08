@@ -1,0 +1,38 @@
+console.clear();
+console.show();
+
+const { OllamaClient, Message, GenerateOptions, ROLES } = require('./lib/ollamaClient');
+
+const ollama = new OllamaClient();
+
+// Initialize logger
+const jarchiLogger = require('./lib/jarchiLogger');
+const log = jarchiLogger.createLogger('OllamaTest');
+
+// Generate a chat completion
+const messages = [
+    new Message(ROLES.SYSTEM, "You are a helpful assistant."),
+    new Message(ROLES.USER, "Please tell me three jokes about IT Architects?")
+];
+
+const options = new GenerateOptions({
+    temperature: 0.7,
+    topK: 40,
+    topP: 0.9,
+    stream: false
+});
+
+ollama.generateChatCompletion('llama3.1', messages, options)
+    .then(response => log.info(JSON.stringify(response, null, 2)))
+    .catch(error => log.error("Error", error));
+
+// List models
+ollama.listModels()
+    .then(models => {
+        models.forEach(model => {
+            log.info(`Model: ${model.name}`);
+            log.info(`Format: ${model.details.format}`);
+            log.info(`Quantization: ${model.details.quantization_level}`);
+        });
+    })
+    .catch(error => log.error("Error", error));
