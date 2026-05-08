@@ -24,6 +24,20 @@ jobs:
           fetch-depth: 1
           submodules: recursive
 
+      - name: Initialize gh-pages branch
+        run: |
+          set -e
+          # Check if gh-pages exists on remote
+          if git ls-remote --heads origin gh-pages | grep -q gh-pages; then
+            echo "gh-pages already exists"
+          else
+            echo "Creating initial gh-pages branch"
+            git checkout --orphan gh-pages
+            git commit -m "Initial gh-pages deployment" --allow-empty
+            git push origin gh-pages || echo "Created gh-pages"
+            git checkout main
+          fi
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -55,8 +69,6 @@ jobs:
           GH_PAGES_DIR=$(mktemp -d)
           git clone --depth 1 --branch gh-pages \
             "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
-            "$GH_PAGES_DIR" 2>/dev/null || git clone --depth 1 \
-            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
             "$GH_PAGES_DIR"
           cp _site/index.html "$GH_PAGES_DIR/"
           cd "$GH_PAGES_DIR"
@@ -64,7 +76,7 @@ jobs:
           git config user.email "${{ github.actor }}@users.noreply.github.com"
           git add index.html
           git commit -m "chore: add custom index page" || true
-          git push origin gh-pages || echo "push done"
+          git push origin gh-pages
           rm -rf "$GH_PAGES_DIR"
 
       - name: Trigger Pages deployment
@@ -80,5 +92,5 @@ jobs:
           date >> .deploy-trigger
           git add .deploy-trigger
           git commit -m "ci: trigger Pages deployment" || true
-          git push origin gh-pages || echo "push done"
+          git push origin gh-pages
           rm -rf "$GH_PAGES_DIR"
