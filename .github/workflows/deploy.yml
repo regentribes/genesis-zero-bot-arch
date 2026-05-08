@@ -24,12 +24,19 @@ jobs:
           fetch-depth: 1
           submodules: recursive
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Build custom index
+        run: python3 build_index.py
+
       - name: Initialize gh-pages branch
         run: |
           set -e
           git config --global user.email "genesis-zero-bot@users.noreply.github.com"
           git config --global user.name "genesis-zero-bot"
-          # Check if gh-pages exists on remote
           if git ls-remote --heads origin gh-pages | grep -q gh-pages; then
             echo "gh-pages already exists"
           else
@@ -40,30 +47,17 @@ jobs:
             git checkout main
           fi
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Build custom index
-        run: python3 build_index.py
-
-      - name: Run Archi HTML Report
-        run: |
-          docker run --rm \
-            -v "${{ github.workspace }}:/archi/project" \
-            -e ARCHI_PROJECT_PATH=/archi/project \
-            -e ARCHI_HTML_REPORT_ENABLED=true \
-            -e ARCHI_REPORT_PATH=/archi/project/.archi_report \
-            ghcr.io/woozymasta/archimate-ci-image:5.7.0-1.0.6
-
-      - name: Deploy Archi report to gh-pages
+      - name: Deploy full Archi report (HTML + PDF + DOCX + model export)
         uses: WoozyMasta/archimate-ci-image@5.7.0-1.0.6
         with:
-          archiHtmlReportEnabled: false
+          archiHtmlReportEnabled: true
+          archiJasperReportEnabled: true
+          archiJasperReportFormats: PDF,DOCX
+          archiCsvReportEnabled: false
+          archiExportModelEnabled: true
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           githubPagesBranch: gh-pages
-          gitSubtreePrefix: .archi_report
+          gitSubtreePrefix: ""
 
       - name: Add custom index to gh-pages
         run: |
