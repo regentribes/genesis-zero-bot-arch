@@ -1,170 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<archimate:model xmlns:archimate="http://www.archimatetool.com/archimate"
-  name="Regenerative Neighbourhood Core Architecture"
-  id="model-regen-neighbourhood"
-  version="1.0.0"
-  uuid="regen-neighbourhood-v100">
-
+<archimate:model xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:archimate="http://www.archimatetool.com/archimate" name="Regenerative Neighbourhood Core Architecture" id="model-regen-neighbourhood" version="1.0.0">
   <property key="domain" value="regenerative-community"/>
   <property key="layer" value="all"/>
-
-  <!-- ═══════════════════════════════════════════════════
-       BUSINESS LAYER: Community Structure
-       ═══════════════════════════════════════════════════ -->
-
-  <!-- Core structural unit -->
-  <business-actor id="actor-holon" name="Holon Unit" documentation="Local biome self-governance unit. Self-contained but connected to meso/macro levels.">
-    <property key="holon_type" value="micro"/>
-  </business-actor>
-
-  <!-- Community members -->
-  <business-actor id="actor-practitioner" name="Community Practitioner" documentation="Individual member contributing to and benefiting from the commons."/>
-  <business-actor id="actor-collective" name="Collective Node" documentation="Regional grouping of Holons with shared governance."/>
-
-  <!-- Roles within the Holon -->
-  <business-role id="role-catalyst" name="Catalyst" documentation="Egregore role: initiates action, identifies opportunities."/>
-  <business-role id="role-stabilizer" name="Stabilizer" documentation="Egregore role: maintains consistency, reduces entropy."/>
-  <business-role id="role-synthesizer" name="Synthesizer" documentation="Egregore role: connects insights across domains."/>
-
-  <!-- Core processes -->
-  <business-process id="process-commons-governance" name="Commons Governance" documentation="Ostrom-principle operation: boundary rules, congruence, collective-choice, monitoring, graduated sanctions, conflict-resolution, recognized rights."/>
-
-  <business-process id="process-evidence-competition" name="Evidence-Based Competition" documentation="Egregores compete based on governance efficiency and ecosystem integration. Influence flows to what works."/>
-
-  <business-process id="process-reputation-update" name="Reputation Update" documentation="Continuous evidence tracking and reputation adjustment based on measurable outcomes."/>
-
-  <!-- Services -->
-  <business-service id="service-water-cycle" name="Water Cycle Service" documentation="Circular water management: tank, sensors, drip irrigation."/>
-  <business-service id="service-food-production" name="Food Production Service" documentation="Soil management, composting, polyculture planning."/>
-  <business-service id="service-energy-grid" name="Energy Grid Service" documentation="Solar powerbank, microgrid coordination, Raft consensus."/>
-  <business-service id="service-knowledge" name="Knowledge Service" documentation="Genesis Brain knowledge graph, SurrealDB storage, MCP integration."/>
-
-  <!-- Business objects -->
-  <business-object id="obj-ostrom-principles" name="Ostrom's 8 Principles" documentation="Empirical foundation for commons self-governance at any scale."/>
-  <business-object id="obj-holonic-structure" name="Holonic Structure" documentation="Micro-Holon (local biome) → Meso-Holon (regional) → Macro-Holon (global)."/>
-  <business-object id="obj-regeneration-metrics" name="Regeneration Metrics" documentation="Observable ecological outcomes used for proof-of-regeneration verification."/>
-
-  <!-- ═══════════════════════════════════════════════════
-       APPLICATION LAYER: Software Systems
-       ═══════════════════════════════════════════════════ -->
-
-  <application-component id="app-genesis-brain" name="Genesis Brain" documentation="SurrealDB knowledge graph with vector embeddings, NARS epistemic truth values, and spatial addressing."/>
-  <application-component id="app-agent-skills" name="Agent Skills" documentation="SKILL.md encoded institutional knowledge packages for autonomous execution."/>
-  <application-component id="app-mcp" name="Model Context Protocol" documentation="Standardized agent-to-tool integration layer."/>
-  <application-component id="app-spatial-addressing" name="Spatial Addressing" documentation="Graph traversal-based location, not GPS coordinates. Formation coding language (FCL) for drone/swarm coordination."/>
-
-  <!-- Application services -->
-  <application-service id="appserv-surrealdb" name="SurrealDB Service" documentation="Time-series + graph database for knowledge storage and retrieval."/>
-  <application-service id="appserv-kreuzberg" name="Kreuzberg Extraction" documentation="Document extraction from 75+ formats (PDF, Office, images, HTML, email)."/>
-  <application-service id="appserv-mcp-bridge" name="MCP Bridge" documentation="Connects OpenClaw agent runtime to MCP tool ecosystem."/>
-
-  <!-- Data objects -->
-  <data-object id="data-concepts" name="Concept Graph" documentation="5,000+ concepts with vector embeddings and truth values."/>
-  <data-object id="data-sources" name="Source Documents" documentation="Canonical content from wiki sources, Telegram exports, research."/>
-  <data-object id="data-synthesis" name="Synthesis Documents" documentation="Cross-document synthesis producing thesis statements and claims."/>
-
-  <!-- ═══════════════════════════════════════════════════
-       TECHNOLOGY LAYER: Infrastructure
-       ═══════════════════════════════════════════════════ -->
-
-  <node id="node-edge-hp" name="Edge Node (HP EliteBook)" documentation="HP EliteBook x360 1030 G3, 16GB RAM, 250GB SSD. Local VPS for Hermes, claw, web server."/>
-  <node id="node-hetzner" name="Hetzner VPS" documentation="Current cloud VPS. Being replaced by local HP nodes due to cost/performance constraints."/>
-
-  <device id="device-sensor-temp" name="Temperature/Humidity Sensor" documentation="DHT22 sensor: temperature + humidity as shared latent variables for correlated inference across modules."/>
-  <device id="device-soil-sensor" name="Soil Moisture Sensor" documentation="Soil moisture readings for drip irrigation decision support."/>
-  <device id="device-water-tank" name="Water Tank Sensor" documentation="Tank level monitoring for circular water management."/>
-
-  <system-software id="sys-software-surrealdb" name="SurrealDB" documentation="Database running as user systemd service, ws://127.0.0.1:8000."/>
-  <system-software id="sys-software-openclaw" name="OpenClaw Runtime" documentation="Agent runtime with wiki, memory, and channel integrations."/>
-  <system-software id="sys-software-mesh" name="Mesh Radio" documentation="80-400ms latency communication across edge nodes."/>
-
-  <!-- Artifacts -->
-  <artifact id="art-sensor-data" name="Sensor Data Stream" documentation="Continuous readings from DHT22, soil moisture, water tank."/>
-  <artifact id="art-model-weights" name="AI Model Weights" documentation="GGUF format local LLM models for offline inference."/>
-  <artifact id="art-raft-log" name="Raft Consensus Log" documentation="Append-only log for leader election and state replication."/>
-
-  <!-- Communication paths -->
-  <communication-network id="net-mesh" name="Mesh Radio Network" documentation="P2P mesh radio for village-scale connectivity without internet."/>
-  <communication-network id="net-internet" name="Internet Backbone" documentation="Fallback connectivity for cross-village coordination."/>
-
-  <!-- ═══════════════════════════════════════════════════
-       MOTIVATION LAYER: Governance & Strategy
-       ═══════════════════════════════════════════════════ -->
-
-  <driver id="driver-regenerative" name="Regenerative Development" documentation="Build circular systems that replace extractive patterns."/>
-  <driver id="driver-offline-first" name="Offline Resilience" documentation="Continue operation under total internet blackout."/>
-
-  <goal id="goal-circular-economy" name="Circular Economy" documentation="Water, food, energy, waste all circular with no external dependency."/>
-  <goal id="goal-governance" name="Self-Governance" documentation="Communities govern themselves via Ostrom-principle commons."/>
-
-  <principle id="principle-ostrom" name="Ostrom Compliance" documentation="All commons operations follow Ostrom's 8 principles."/>
-  <principle id="principle-openclaw" name="Open Architecture" documentation="No vendor lock-in. Self-hostable. P2P sync."/>
-
-  <requirement id="req-no-cloud" name="Cloud Independence" documentation="All operations continue without internet or cloud services."/>
-  <requirement id="req-mesh-sync" name="Mesh Sync" documentation="Knowledge syncs across edge nodes via mesh radio."/>
-
-  <!-- ═══════════════════════════════════════════════════
-       STRATEGY LAYER: Capabilities & Resources
-       ═══════════════════════════════════════════════════ -->
-
-  <capability id="cap-knowledge" name="Knowledge Infrastructure" documentation="Ability to ingest, store, retrieve, and synthesize community knowledge."/>
-  <capability id="cap-governance" name="Commons Governance" documentation="Ability to govern shared resources through evidence-based competition."/>
-  <capability id="cap-physical" name="Physical Operations" documentation="Ability to manage circular physical infrastructure (water, food, energy)."/>
-
-  <resource id="res-surrealdb" name="SurrealDB Knowledge Graph" documentation="Primary knowledge storage and retrieval system."/>
-  <resource id="res-openclaw" name="OpenClaw Agent Runtime" documentation="Agent orchestration for community operations."/>
-  <resource id="res-hp-edge" name="HP Edge Nodes" documentation="Local compute resources replacing cloud dependency."/>
-
-  <!-- ═══════════════════════════════════════════════════
-       IMPLEMENTATION LAYER: Migration & Planning
-       ═══════════════════════════════════════════════════ -->
-
-  <work-package id="wp-hetzner-migration" name="Migrate from Hetzner to Local" documentation="Replace Hetzner VPS with HP EliteBook edge nodes. Estimated 3 days per node."/>
-  <work-package id="wp-dht22-integration" name="DHT22 Sensor Integration" documentation="Add temperature/humidity sensing to Farmers IoT Toolkit."/>
-
-  <plateau id="plateau-v1" name="Current State" documentation="Hetzner-based, partial offline capability, wiki/ADR/skill infrastructure."/>
-  <plateau id="plateau-v2" name="Edge-Native" documentation="All operations on local HP nodes, full mesh sync, ArchiMate portal."/>
-
-  <gap id="gap-mesh-protocol" name="Mesh Protocol Gap" documentation="Need to finalize Raft consensus implementation for mesh radio."/>
-  <gap id="gap-fcl" name="FCL Implementation" name="Formation Coding Language prototype in Manim pending deployment."/>
-
-  <!-- ═══════════════════════════════════════════════════
-       RELATIONSHIPS
-       ═══════════════════════════════════════════════════ -->
-
-  <!-- Holon structure -->
-  <relationship id="rel-holon-contains" type="composition" source="#actor-holon" target="#role-catalyst"/>
-  <relationship id="rel-holon-contains2" type="composition" source="#actor-holon" target="#role-stabilizer"/>
-  <relationship id="rel-holon-contains3" type="composition" source="#actor-holon" target="#role-synthesizer"/>
-
-  <!-- Process to service -->
-  <relationship id="rel-governance-service" type="realization" source="#process-commons-governance" target="#service-water-cycle"/>
-  <relationship id="rel-competition-evidence" type="serving" source="#process-evidence-competition" target="#actor-holon"/>
-
-  <!-- Application serves business -->
-  <relationship id="rel-genesis-serves" type="serving" source="#app-genesis-brain" target="#actor-holon"/>
-  <relationship id="rel-mcp-serves" type="serving" source="#app-mcp" target="#app-agent-skills"/>
-  <relationship id="rel-skills-serves" type="serving" source="#app-agent-skills" target="#actor-practitioner"/>
-
-  <!-- Technology supports application -->
-  <relationship id="rel-node-surreal" type="serving" source="#node-edge-hp" target="#sys-software-surrealdb"/>
-  <relationship id="rel-surreal-data" type="composition" source="#sys-software-surrealdb" target="#data-concepts"/>
-  <relationship id="rel-sensor-edge" type="assignment" source="#device-sensor-temp" target="#node-edge-hp"/>
-
-  <!-- Motivation influences strategy -->
-  <relationship id="rel-goal-drives-cap" type="influence" source="#goal-circular-economy" target="#cap-physical"/>
-  <relationship id="rel-principle-requires" type="influence" source="#principle-ostrom" target="#process-commons-governance"/>
-  <relationship id="rel-req-derives" type="realization" source="#req-no-cloud" target="#goal-governance"/>
-
-  <!-- Strategy enables governance -->
-  <relationship id="rel-cap-supports" type="assignment" source="#cap-knowledge" target="#app-genesis-brain"/>
-  <relationship id="rel-res-provides" type="composition" source="#res-surrealdb" target="#data-concepts"/>
-
-  <!-- Implementation gaps -->
-  <relationship id="rel-gap-triggers" type="triggering" source="#gap-mesh-protocol" target="#wp-hetzner-migration"/>
-
-  <!-- Network connectivity -->
-  <relationship id="rel-mesh-network" type="realization" source="#net-mesh" target="#communication-network"/>
-  <relationship id="rel-edge-networked" type="assignment" source="#node-edge-hp" target="#net-mesh"/>
-
+  <property key="holon_type" value="micro"/>
+  <folder name="Strategy" id="folder-strategy" type="strategy">
+    <element xsi:type="archimate:Plateau" id="plateau-v2" name="Edge-Native" documentation="All operations on local HP nodes, full mesh sync, ArchiMate portal."/>
+    <element xsi:type="archimate:Gap" id="gap-mesh-protocol" name="Mesh Protocol Gap" documentation="Need to finalize Raft consensus implementation for mesh radio."/>
+    <element xsi:type="archimate:Gap" id="gap-fcl" name="FCL Implementation" documentation="Formation Coding Language prototype in Manim pending deployment."/>
+  </folder>
+  <folder name="Business" id="folder-business" type="business">
+    <element xsi:type="archimate:BusinessActor" id="actor-practitioner" name="Community Practitioner" documentation="Individual member contributing to and benefiting from the commons."/>
+    <element xsi:type="archimate:BusinessActor" id="actor-collective" name="Collective Node" documentation="Regional grouping of Holons with shared governance."/>
+    <element xsi:type="archimate:BusinessActor" id="actor-holon" name="Holon Unit" documentation="Local biome self-governance unit. Self-contained but connected to meso/macro levels."><property key="holon_type" value="micro"/></element>
+    <element xsi:type="archimate:BusinessRole" id="role-catalyst" name="Catalyst" documentation="Egregore role: initiates action, identifies opportunities."/>
+    <element xsi:type="archimate:BusinessRole" id="role-stabilizer" name="Stabilizer" documentation="Egregore role: maintains consistency, reduces entropy."/>
+    <element xsi:type="archimate:BusinessRole" id="role-synthesizer" name="Synthesizer" documentation="Egregore role: connects insights across domains."/>
+    <element xsi:type="archimate:BusinessProcess" id="process-commons-governance" name="Commons Governance" documentation="Ostrom-principle operation: boundary rules, congruence, collective-choice, monitoring, graduated sanctions, conflict-resolution, recognized rights."/>
+    <element xsi:type="archimate:BusinessProcess" id="process-evidence-competition" name="Evidence-Based Competition" documentation="Egregores compete based on governance efficiency and ecosystem integration. Influence flows to what works."/>
+    <element xsi:type="archimate:BusinessProcess" id="process-reputation-update" name="Reputation Update" documentation="Continuous evidence tracking and reputation adjustment based on measurable outcomes."/>
+    <element xsi:type="archimate:BusinessService" id="service-water-cycle" name="Water Cycle Service" documentation="Circular water management: tank, sensors, drip irrigation."/>
+    <element xsi:type="archimate:BusinessService" id="service-food-production" name="Food Production Service" documentation="Soil management, composting, polyculture planning."/>
+    <element xsi:type="archimate:BusinessService" id="service-energy-grid" name="Energy Grid Service" documentation="Solar powerbank, microgrid coordination, Raft consensus."/>
+    <element xsi:type="archimate:BusinessService" id="service-knowledge" name="Knowledge Service" documentation="Genesis Brain knowledge graph, SurrealDB storage, MCP integration."/>
+    <element xsi:type="archimate:BusinessObject" id="obj-ostrom-principles" name="Ostrom's 8 Principles" documentation="Empirical foundation for commons self-governance at any scale."/>
+    <element xsi:type="archimate:BusinessObject" id="obj-holonic-structure" name="Holonic Structure" documentation="Micro-Holon (local biome) → Meso-Holon (regional) → Macro-Holon (global)."/>
+    <element xsi:type="archimate:BusinessObject" id="obj-regeneration-metrics" name="Regeneration Metrics" documentation="Observable ecological outcomes used for proof-of-regeneration verification."/>
+  </folder>
+  <folder name="Application" id="folder-application" type="application">
+    <element xsi:type="archimate:ApplicationComponent" id="app-genesis-brain" name="Genesis Brain" documentation="SurrealDB knowledge graph with vector embeddings, NARS epistemic truth values, and spatial addressing."/>
+    <element xsi:type="archimate:ApplicationComponent" id="app-agent-skills" name="Agent Skills" documentation="SKILL.md encoded institutional knowledge packages for autonomous execution."/>
+    <element xsi:type="archimate:ApplicationComponent" id="app-mcp" name="Model Context Protocol" documentation="Standardized agent-to-tool integration layer."/>
+    <element xsi:type="archimate:ApplicationService" id="appserv-surrealdb" name="SurrealDB Service" documentation="Time-series + graph database for knowledge storage and retrieval."/>
+    <element xsi:type="archimate:ApplicationService" id="appserv-kreuzberg" name="Kreuzberg Extraction" documentation="Document extraction from 75+ formats (PDF, Office, images, HTML, email)."/>
+    <element xsi:type="archimate:ApplicationService" id="appserv-mcp-bridge" name="MCP Bridge" documentation="Connects OpenClaw agent runtime to MCP tool ecosystem."/>
+    <element xsi:type="archimate:DataObject" id="data-concepts" name="Concept Graph" documentation="5,000+ concepts with vector embeddings and truth values."/>
+    <element xsi:type="archimate:DataObject" id="data-sources" name="Source Documents" documentation="Canonical content from wiki sources, Telegram exports, research."/>
+    <element xsi:type="archimate:DataObject" id="data-synthesis" name="Synthesis Documents" documentation="Cross-document synthesis producing thesis statements and claims."/>
+  </folder>
+  <folder name="Technology &amp; Physical" id="folder-technology" type="technology">
+    <element xsi:type="archimate:Node" id="node-edge-hp" name="Edge Node (HP EliteBook)" documentation="HP EliteBook x360 1030 G3, 16GB RAM, 250GB SSD. Local VPS for Hermes, claw, web server."/>
+    <element xsi:type="archimate:Device" id="device-soil-sensor" name="Soil Moisture Sensor" documentation="Soil moisture readings for drip irrigation decision support."/>
+    <element xsi:type="archimate:Device" id="device-water-tank" name="Water Tank Sensor" documentation="Tank level monitoring for circular water management."/>
+    <element xsi:type="archimate:SystemSoftware" id="sys-software-openclaw" name="OpenClaw Runtime" documentation="Agent runtime with wiki, memory, and channel integrations."/>
+    <element xsi:type="archimate:SystemSoftware" id="sys-software-mesh" name="Mesh Radio" documentation="80-400ms latency communication across edge nodes."/>
+    <element xsi:type="archimate:Artifact" id="art-sensor-data" name="Sensor Data Stream" documentation="Continuous readings from DHT22, soil moisture, water tank."/>
+    <element xsi:type="archimate:Artifact" id="art-model-weights" name="AI Model Weights" documentation="GGUF format local LLM models for offline inference."/>
+    <element xsi:type="archimate:Artifact" id="art-raft-log" name="Raft Consensus Log" documentation="Append-only log for leader election and state replication."/>
+    <element xsi:type="archimate:CommunicationNetwork" id="net-mesh" name="Mesh Radio Network" documentation="P2P mesh radio for village-scale connectivity without internet."/>
+    <element xsi:type="archimate:CommunicationNetwork" id="net-internet" name="Internet Backbone" documentation="Fallback connectivity for cross-village coordination."/>
+  </folder>
+  <folder name="Motivation" id="folder-motivation" type="motivation">
+    <element xsi:type="archimate:Driver" id="driver-regenerative" name="Regenerative Development" documentation="Build circular systems that replace extractive patterns."/>
+    <element xsi:type="archimate:Driver" id="driver-offline-first" name="Offline Resilience" documentation="Continue operation under total internet blackout."/>
+    <element xsi:type="archimate:Goal" id="goal-circular-economy" name="Circular Economy" documentation="Water, food, energy, waste all circular with no external dependency."/>
+    <element xsi:type="archimate:Goal" id="goal-governance" name="Self-Governance" documentation="Communities govern themselves via Ostrom-principle commons."/>
+    <element xsi:type="archimate:Principle" id="principle-ostrom" name="Ostrom Compliance" documentation="All commons operations follow Ostrom's 8 principles."/>
+    <element xsi:type="archimate:Principle" id="principle-openclaw" name="Open Architecture" documentation="No vendor lock-in. Self-hostable. P2P sync."/>
+    <element xsi:type="archimate:Requirement" id="req-no-cloud" name="Cloud Independence" documentation="All operations continue without internet or cloud services."/>
+    <element xsi:type="archimate:Requirement" id="req-mesh-sync" name="Mesh Sync" documentation="Knowledge syncs across edge nodes via mesh radio."/>
+    <element xsi:type="archimate:Capability" id="cap-knowledge" name="Knowledge Infrastructure" documentation="Ability to ingest, store, retrieve, and synthesize community knowledge."/>
+    <element xsi:type="archimate:Capability" id="cap-governance" name="Commons Governance" documentation="Ability to govern shared resources through evidence-based competition."/>
+    <element xsi:type="archimate:Capability" id="cap-physical" name="Physical Operations" documentation="Ability to manage circular physical infrastructure (water, food, energy)."/>
+    <element xsi:type="archimate:Resource" id="res-surrealdb" name="SurrealDB Knowledge Graph" documentation="Primary knowledge storage and retrieval system."/>
+    <element xsi:type="archimate:Resource" id="res-openclaw" name="OpenClaw Agent Runtime" documentation="Agent orchestration for community operations."/>
+    <element xsi:type="archimate:Resource" id="res-hp-edge" name="HP Edge Nodes" documentation="Local compute resources replacing cloud dependency."/>
+  </folder>
+  <folder name="Implementation &amp; Migration" id="folder-implementation_migration" type="implementation_migration">
+    <element xsi:type="archimate:WorkPackage" id="wp-hetzner-migration" name="Migrate from Hetzner to Local" documentation="Replace Hetzner VPS with HP EliteBook edge nodes. Estimated 3 days per node."/>
+  </folder>
 </archimate:model>

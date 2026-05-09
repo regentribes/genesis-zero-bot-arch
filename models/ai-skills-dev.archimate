@@ -1,74 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<archimate:model xmlns:archimate="http://www.archimatetool.com/archimate"
-  name="AI Skills Development Architecture"
-  id="ai-skills-dev-arch"
-  version="1.0.0">
-
+<archimate:model xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:archimate="http://www.archimatetool.com/archimate" name="AI Skills Development" id="model-ai-skills-dev" version="1.0.0">
   <property key="domain" value="regenerative-community"/>
   <property key="layer" value="all"/>
-
-  <!-- Motivation Layer: Skills Framework -->
-  <driver id="driver.ai-demand" name="AI Skill Demand" documentation="Community members need structured AI/GPU training paths"/>
-  <goal id="goal.skills-framework" name="Establish Verified AI Skills Framework" documentation="Create a community认可的AI技能认证体系"/>
-  <requirement id="req.nvidia-align" name="NVIDIA Certification Alignment" documentation="Align with industry-standard NVIDIA certification tiers"/>
-  <requirement id="req.progress-tracking" name="Progress Tracking" documentation="Track member progress from interest to certification"/>
-  <principle id="prin.open-access" name="Open Access Entry" documentation="Free content tracks lower barrier to entry"/>
-  <constraint id="const.offline-capable" name="Offline Capability" documentation="Training content should be downloadable for field use"/>
-
-  <!-- Business Layer: Community Roles and Services -->
-  <business-actor id="actor.learner" name="AI Learner" documentation="Community member pursuing AI certification"/>
-  <business-actor id="actor.coordinator" name="Skills Coordinator" documentation="Community role that assigns tasks based on verified skills"/>
-  <business-service id="service.skills-registry" name="Community Skills Registry" documentation="Shared registry tracking member training progress and certifications"/>
-  <business-service id="service.certification" name="Certification Verification Service" documentation="Verifies NVIDIA digital badges against official portal"/>
-  <business-process id="process.enroll" name="Track Enrollment" documentation="Member registers interest and enrolls in training track"/>
-  <business-process id="process.progress" name="Progress Update" documentation="Member updates course completion status"/>
-  <business-process id="process.assign" name="Role Assignment" documentation="Coordinator assigns roles based on verified credentials"/>
-
-  <!-- Application Layer: Software Systems -->
-  <application-component id="app.genesis-brain" name="Genesis Brain" documentation="SurrealDB knowledge graph storing member skills and training records"/>
-  <application-component id="app.training-portal" name="NVIDIA Training Portal" documentation="Official NVIDIA developer portal for courses and exams"/>
-  <application-component id="app.badge-verifier" name="Badge Verifier" documentation="NVIDIA Digital Badge verification interface"/>
-  <application-interface id="iface.skills-api" name="Skills Registry API" documentation="Interface for reading/writing member training records"/>
-
-  <!-- Technology Layer: Infrastructure -->
-  <node id="node.edge-hp" name="HP EliteBook Edge Node" documentation="Local VPS hosting Genesis Brain and training cache"/>
-  <node id="node.nvidia-cloud" name="NVIDIA Cloud Infrastructure" documentation="GPU servers for AI training and certification exams"/>
-  <artifact id="art.training-content" name="Training Content Cache" documentation="Downloaded NVIDIA courses for offline field use"/>
-  <artifact id="art.skills-graph" name="Skills Knowledge Graph" documentation="SurrealDB graph storing certifications and training paths"/>
-  <system-software id="sw.surrealdb" name="SurrealDB" documentation="Graph database for skills registry"/>
-  <path id="path.internet" name="Internet" documentation="Required for certification exams and initial course access"/>
-
-  <!-- Relationships: Motivation -->
-  <relationship id="rel.driver-goal" type="influence" source="#driver.ai-demand" target="#goal.skills-framework"/>
-  <relationship id="rel.goal-req1" type="serving" source="#goal.skills-framework" target="#req.nvidia-align"/>
-  <relationship id="rel.goal-req2" type="serving" source="#goal.skills-framework" target="#req.progress-tracking"/>
-  <relationship id="rel.prin-req" type="serving" source="#prin.open-access" target="#req.progress-tracking"/>
-
-  <!-- Relationships: Business -->
-  <relationship id="rel.actor-process1" type="assignment" source="#actor.learner" target="#process.enroll"/>
-  <relationship id="rel.actor-process2" type="assignment" source="#actor.learner" target="#process.progress"/>
-  <relationship id="rel.coord-process" type="assignment" source="#actor.coordinator" target="#process.assign"/>
-  <relationship id="rel.svc-registry" type="composition" source="#service.skills-registry" target="#process.enroll"/>
-  <relationship id="rel.svc-cert" type="composition" source="#service.certification" target="#process.assign"/>
-
-  <!-- Relationships: Application -->
-  <relationship id="rel.genesis-skills" type="realization" source="#app.genesis-brain" target="#service.skills-registry"/>
-  <relationship id="rel.genesis-svc" type="serving" source="#app.genesis-brain" target="#actor.learner"/>
-  <relationship id="rel.portal-svc" type="serving" source="#app.training-portal" target="#actor.learner"/>
-  <relationship id="rel.badges-svc" type="serving" source="#app.badge-verifier" target="#service.certification"/>
-  <relationship id="rel.iface-impl" type="realization" source="#iface.skills-api" target="#app.genesis-brain"/>
-
-  <!-- Relationships: Technology -->
-  <relationship id="rel.edge-host" type="serving" source="#node.edge-hp" target="#app.genesis-brain"/>
-  <relationship id="rel.nvidia-cloud-serve" type="serving" source="#node.nvidia-cloud" target="#app.training-portal"/>
-  <relationship id="rel.content-cache" type="composition" source="#art.training-content" target="#node.edge-hp"/>
-  <relationship id="rel.skills-graph" type="composition" source="#art.skills-graph" target="#node.edge-hp"/>
-  <relationship id="rel.surrealdb-sw" type="serving" source="#sw.surrealdb" target="#art.skills-graph"/>
-  <relationship id="rel.internet-access" type="serving" source="#path.internet" target="#app.badge-verifier"/>
-
-  <!-- Cross-layer flows -->
-  <relationship id="rel.learner-portal" type="access" source="#actor.learner" target="#app.training-portal"/>
-  <relationship id="rel.coord-genesis" type="access" source="#actor.coordinator" target="#app.genesis-brain"/>
-  <relationship id="rel.const-internet" type="influence" source="#const.offline-capable" target="#art.training-content"/>
-
+  <folder name="Business" id="folder-business" type="business">
+    <element xsi:type="archimate:BusinessActor" id="actor.learner" name="AI Learner" documentation="Community member pursuing AI certification"/>
+    <element xsi:type="archimate:BusinessActor" id="actor.coordinator" name="Skills Coordinator" documentation="Community role that assigns tasks based on verified skills"/>
+    <element xsi:type="archimate:BusinessProcess" id="process.enroll" name="Track Enrollment" documentation="Member registers interest and enrolls in training track"/>
+    <element xsi:type="archimate:BusinessProcess" id="process.progress" name="Progress Update" documentation="Member updates course completion status"/>
+    <element xsi:type="archimate:BusinessProcess" id="process.assign" name="Role Assignment" documentation="Coordinator assigns roles based on verified credentials"/>
+    <element xsi:type="archimate:BusinessService" id="service.skills-registry" name="Community Skills Registry" documentation="Shared registry tracking member training progress and certifications"/>
+    <element xsi:type="archimate:BusinessService" id="service.certification" name="Certification Verification Service" documentation="Verifies NVIDIA digital badges against official portal"/>
+  </folder>
+  <folder name="Application" id="folder-application" type="application">
+    <element xsi:type="archimate:ApplicationComponent" id="app.genesis-brain" name="Genesis Brain" documentation="SurrealDB knowledge graph storing member skills and training records"/>
+    <element xsi:type="archimate:ApplicationComponent" id="app.training-portal" name="NVIDIA Training Portal" documentation="Official NVIDIA developer portal for courses and exams"/>
+    <element xsi:type="archimate:ApplicationComponent" id="app.badge-verifier" name="Badge Verifier" documentation="NVIDIA Digital Badge verification interface"/>
+  </folder>
+  <folder name="Technology &amp; Physical" id="folder-technology" type="technology">
+    <element xsi:type="archimate:Node" id="node.edge-hp" name="HP EliteBook Edge Node" documentation="Local VPS hosting Genesis Brain and training cache"/>
+    <element xsi:type="archimate:Node" id="node.nvidia-cloud" name="NVIDIA Cloud Infrastructure" documentation="GPU servers for AI training and certification exams"/>
+    <element xsi:type="archimate:SystemSoftware" id="sw.surrealdb" name="SurrealDB" documentation="Graph database for skills registry"/>
+    <element xsi:type="archimate:Artifact" id="art.training-content" name="Training Content Cache" documentation="Downloaded NVIDIA courses for offline field use"/>
+    <element xsi:type="archimate:Artifact" id="art.skills-graph" name="Skills Knowledge Graph" documentation="SurrealDB graph storing certifications and training paths"/>
+  </folder>
+  <folder name="Motivation" id="folder-motivation" type="motivation">
+    <element xsi:type="archimate:Goal" id="goal.skills-framework" name="Establish Verified AI Skills Framework" documentation="Create a community认可的AI技能认证体系"/>
+    <element xsi:type="archimate:Principle" id="prin.open-access" name="Open Access Entry" documentation="Free content tracks lower barrier to entry"/>
+    <element xsi:type="archimate:Requirement" id="req.nvidia-align" name="NVIDIA Certification Alignment" documentation="Align with industry-standard NVIDIA certification tiers"/>
+    <element xsi:type="archimate:Requirement" id="req.progress-tracking" name="Progress Tracking" documentation="Track member progress from interest to certification"/>
+  </folder>
 </archimate:model>
