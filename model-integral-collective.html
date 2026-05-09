@@ -3,44 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Integral Collective Node — ArchiMate Model Viewer</title>
+  <title>Integral Collective Node — Archi Viewer</title>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #000; color: #888; font-family: system-ui, sans-serif; height: 100vh; display: flex; flex-direction: column; }
-    .topbar {
-      background: #0a0a0a;
-      border-bottom: 1px solid #222;
-      padding: 1rem 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      flex-shrink: 0;
-    }
-    .topbar h1 { color: #fff; font-size: 1rem; font-weight: 600; }
-    .topbar p { color: #555; font-size: 0.85rem; }
-    .topbar a { color: #4a9eff; text-decoration: none; font-size: 0.85rem; }
-    .topbar a:hover { text-decoration: underline; }
-    .viewer-wrap { flex: 1; position: relative; }
-    .viewer-wrap iframe { width: 100%; height: 100%; border: none; display: block; }
-    .loading {
-      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
-      background: #000; color: #555; font-size: 0.9rem; pointer-events: none;
-      transition: opacity 0.4s;
-    }
-    .loading.hidden { opacity: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#000;--text:#888;--heading:#fff;--muted:#555;--border:#222;--accent:#50c878}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif}
+.topbar{background:#111;border-bottom:1px solid var(--border);padding:.75rem 1.5rem;display:flex;align-items:center;gap:1rem}
+.topbar h1{color:var(--heading);font-size:.95rem;font-weight:600}
+.topbar a{color:var(--accent);text-decoration:none;font-size:.8rem;margin-left:auto}
+.topbar a:hover{text-decoration:underline}
+.viewer{flex:1;overflow:hidden}
+.viewer iframe{width:100%;height:100%;border:none;display:block}
+.load{border:none;display:block}
   </style>
 </head>
 <body>
   <div class="topbar">
-    <div>
-      <h1>Integral Collective Node</h1>
-      <p>OAD → ITC → CDS → COS → FRS five-subsystem governance loop.</p>
-    </div>
-    <a href="models.html">&#8592; All models</a>
+    <h1>Integral Collective Node</h1>
+    <a href="models.html">&#8592; All Models</a>
   </div>
-  <div class="viewer-wrap">
-    <div class="loading" id="loader">Loading Archi viewer…</div>
-    <iframe src="viewers/integral-collective/index.html" title="Integral Collective Node" id="viewer" onload="document.getElementById('loader').classList.add('hidden')"></iframe>
+  <div class="viewer">
+    <iframe src="viewers/integral-collective/id-54b3d992069f4466a3e28c13f570c100/elements/model.html" title="Integral Collective Node"></iframe>
   </div>
 </body>
 </html>
