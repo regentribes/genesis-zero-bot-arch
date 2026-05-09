@@ -9,6 +9,9 @@ on:
       - '.github/workflows/deploy.yml'
       - 'build_index.py'
       - 'model-*.html'
+      - 'index.html'
+      - 'style.css'
+      - 'models.html'
   workflow_dispatch:
 
 permissions:
