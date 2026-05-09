@@ -3,6 +3,12 @@ name: Deploy ArchiMate Models + HTML Reports
 on:
   push:
     branches: [main]
+    paths:
+      - 'models/**'
+      - 'viewers/**'
+      - '.github/workflows/deploy.yml'
+      - 'build_index.py'
+      - 'model-*.html'
   workflow_dispatch:
 
 permissions:
@@ -47,46 +53,40 @@ jobs:
             git checkout main
           fi
 
-      - name: Deploy full Archi report (HTML + PDF + DOCX + model export)
+      - name: Deploy Archi report
         uses: WoozyMasta/archimate-ci-image@5.7.0-1.0.6
         with:
           archiHtmlReportEnabled: true
-          archiJasperReportEnabled: true
-          archiJasperReportFormats: PDF,DOCX
+          archiJasperReportEnabled: false
           archiCsvReportEnabled: false
           archiExportModelEnabled: true
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           githubPagesBranch: gh-pages
           gitSubtreePrefix: ""
 
-      - name: Add custom index to gh-pages
+      - name: Copy custom files to gh-pages
         run: |
           set -e
           GH_PAGES_DIR=$(mktemp -d)
           git clone --depth 1 --branch gh-pages \
             "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
             "$GH_PAGES_DIR"
-          cp _site/index.html "$GH_PAGES_DIR/"
+          
+          # Copy custom index, model pages, and viewers
+          cp index.html models.html style.css "$GH_PAGES_DIR/"
+          
+          # Copy model-* redirect pages
+          cp model-*.html "$GH_PAGES_DIR/"
+          
+          # Copy all viewers directories
+          if [ -d viewers ]; then
+            cp -r viewers "$GH_PAGES_DIR/"
+          fi
+          
           cd "$GH_PAGES_DIR"
           git config user.name "${{ github.actor }}"
           git config user.email "${{ github.actor }}@users.noreply.github.com"
-          git add index.html
-          git commit -m "chore: add custom index page" || true
-          git push origin gh-pages
-          rm -rf "$GH_PAGES_DIR"
-
-      - name: Trigger Pages deployment
-        run: |
-          set -e
-          GH_PAGES_DIR=$(mktemp -d)
-          git clone --depth 1 --branch gh-pages \
-            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" \
-            "$GH_PAGES_DIR"
-          cd "$GH_PAGES_DIR"
-          git config user.name "${{ github.actor }}"
-          git config user.email "${{ github.actor }}@users.noreply.github.com"
-          date >> .deploy-trigger
-          git add .deploy-trigger
-          git commit -m "ci: trigger Pages deployment" || true
+          git add -A
+          git commit -m "chore: deploy all models and viewers"
           git push origin gh-pages
           rm -rf "$GH_PAGES_DIR"
