@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ArchiMate Models — RegenTribes</title>
+  <style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#000;--text:#888;--heading:#fff;--muted:#555;--border:#222}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;min-height:100vh;line-height:1.6}
+header{border-bottom:1px solid var(--border);padding:2rem;text-align:center}
+header h1{color:var(--heading);font-size:1.4rem;margin-bottom:.4rem}
+header p{color:var(--muted);font-size:.875rem}
+main{max-width:960px;margin:0 auto;padding:2.5rem 2rem 4rem}
+h2.section{color:var(--heading);font-size:.75rem;font-weight:500;text-transform:uppercase;letter-spacing:.1em;margin-bottom:1.5rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.25rem}
+.model-card{background:#0a0a0a;border:1px solid var(--border);border-radius:6px;text-decoration:none;transition:border-color .2s,transform .15s;display:block}
+.model-card:hover{border-color:var(--accent,#4a9eff);transform:translateY(-2px)}
+.card-inner{padding:1.5rem}
+.model-card h2{color:var(--heading);font-size:1rem;margin-bottom:.5rem}
+.model-card p{color:var(--text);font-size:.85rem;margin-bottom:1rem;line-height:1.5}
+.cta{color:var(--accent,#4a9eff);font-size:.85rem}
+footer{border-top:1px solid var(--border);padding:1.5rem 2rem;text-align:center;color:var(--muted);font-size:.8rem}
+@media(max-width:600px){main{padding:1.5rem 1rem 3rem}}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ArchiMate Models</h1>
+    <p>Enterprise architecture rendered by Archi v5.7.0</p>
+  </header>
+  <main>
+    <h2 class="section">Community Models</h2>
+    <div class="grid">
+      <a class="model-card" href="model-myconet-v2.html" style="--accent:#50c878">
+  <div class="card-inner">
+    <h2>MyCoNet v2 — Community Operating System</h2>
+    <p>14-module community OS for regenerative neighbourhoods. Three AI agents, five pillars, five role tiers.</p>
+    <span class="cta">Open viewer &#8594;</span>
+  </div>
+</a>
+    </div>
+  </main>
+  <footer>genesis-zero-bot-arch — Archi reports via archimate-ci-image</footer>
+</body>
+</html>
